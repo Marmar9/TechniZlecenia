@@ -1,0 +1,12 @@
+{
+    "sqltools.connections": [
+        {
+            "ssh": "Disabled",
+            "previewLimit": 50,
+            "server": "localhost",
+            "driver": "PostgreSQL",
+            "name": "tz-db",
+            "connectString": "postgres://postgres:postgres@localhost:5432/tz"
+        }
+    ]
+}
