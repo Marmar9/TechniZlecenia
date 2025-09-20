@@ -120,9 +120,6 @@ pub async fn login(
     }
 }
 
-
-
-
 pub async fn refresh(
     State(app): State<AppState>,
 )
