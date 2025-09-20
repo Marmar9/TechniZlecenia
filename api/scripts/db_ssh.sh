@@ -1,8 +1,6 @@
 #!/bin/bash
 
-SSH_ADDR = "root@206.189.52.131"
-
-ssh -L 5432:localhost:5432 $SSH_ADDR
+ssh -f -N -L 5432:localhost:5432 root@206.189.52.131
 
 if [ $? -eq 0 ]; then
     echo "SSH tunnel to Postgres started -> localhost:5432"
