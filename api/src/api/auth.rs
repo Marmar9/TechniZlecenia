@@ -116,24 +116,10 @@ pub async fn login(
 
     let refresh = match Auth::mint_refresh_token(raw, db).await {
         Ok(token) => token,
-        Err(_) => {
-            return (
-                StatusCode::UNAUTHORIZED,
-                Json(LoginResponse::Failed {
-                    password: true,
-                    email: false,
-                }),
-            ).into_response()
-        }
-    };
-
-    // Implementation continues...
-    (StatusCode::NOT_IMPLEMENTED, "Login not yet fully implemented").into_response()
+        Err(_)
+    }
 }
 
 pub async fn refresh(
     State(app): State<AppState>,
-) -> impl IntoResponse {
-    // TODO: Implement refresh logic
-    (StatusCode::NOT_IMPLEMENTED, "Refresh not yet implemented")
-}
+)
