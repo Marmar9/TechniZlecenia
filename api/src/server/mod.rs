@@ -3,4 +3,5 @@
 
 pub mod auth;
 pub mod credentials;
+pub mod post;
 pub mod user;

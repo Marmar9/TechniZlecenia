@@ -1,0 +1,158 @@
+### Posts API Testing
+
+# Variables
+@baseUrl = http://localhost:3000
+@accessToken = your_access_token_here
+
+### 1. Get all posts (with pagination)
+GET {{baseUrl}}/posts
+Content-Type: application/json
+
+### 2. Get all posts with pagination parameters
+GET {{baseUrl}}/posts?page=0&per_page=5
+Content-Type: application/json
+
+### 3. Get specific post by ID
+GET {{baseUrl}}/posts/550e8400-e29b-41d4-a716-446655440000
+Content-Type: application/json
+
+### 4. Create a new post (requires authentication)
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "title": "My First Post",
+    "description": "This is a detailed description of my first post. It contains useful information and insights."
+}
+
+### 5. Create another post for testing
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "title": "Advanced API Development",
+    "description": "Learn how to build robust APIs with Rust and Axum framework. This post covers authentication, database integration, and best practices."
+}
+
+### 6. Update an existing post (requires authentication and ownership)
+POST {{baseUrl}}/posts/update
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Updated Post Title",
+    "description": "This is the updated description with new content and improved information."
+}
+
+### 7. Update only the title
+POST {{baseUrl}}/posts/update
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "title": "Only Title Updated"
+}
+
+### 8. Update only the description
+POST {{baseUrl}}/posts/update
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "description": "Only description has been updated with this new content."
+}
+
+### 9. Delete a post (requires authentication and ownership)
+DELETE {{baseUrl}}/posts/550e8400-e29b-41d4-a716-446655440000
+Authorization: Bearer {{accessToken}}
+
+### Error Testing Cases
+
+### 10. Try to create post without authentication (should fail)
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+
+{
+    "title": "Unauthorized Post",
+    "description": "This should fail due to missing authentication."
+}
+
+### 11. Try to create post with empty title (should fail)
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "title": "",
+    "description": "This should fail due to empty title."
+}
+
+### 12. Try to create post with empty description (should fail)
+POST {{baseUrl}}/posts/create
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "title": "Valid Title",
+    "description": ""
+}
+
+### 13. Try to update non-existent post (should fail)
+POST {{baseUrl}}/posts/update
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "00000000-0000-0000-0000-000000000000",
+    "title": "Non-existent Post Update"
+}
+
+### 14. Try to update without providing any fields (should fail)
+POST {{baseUrl}}/posts/update
+Content-Type: application/json
+Authorization: Bearer {{accessToken}}
+
+{
+    "id": "550e8400-e29b-41d4-a716-446655440000"
+}
+
+### 15. Try to delete non-existent post (should fail)
+DELETE {{baseUrl}}/posts/00000000-0000-0000-0000-000000000000
+Authorization: Bearer {{accessToken}}
+
+### 16. Try to delete without authentication (should fail)
+DELETE {{baseUrl}}/posts/550e8400-e29b-41d4-a716-446655440000
+
+### 17. Get non-existent post (should return 404)
+GET {{baseUrl}}/posts/00000000-0000-0000-0000-000000000000
+Content-Type: application/json
+
+###
+
+# Notes:
+# 1. Replace {{accessToken}} with a valid JWT access token
+# 2. Replace the UUIDs with actual post IDs from your database
+# 3. Make sure the server is running on localhost:3000 (or update @baseUrl)
+# 4. You'll need to register a user and login first to get an access token
+# 5. Some tests will fail as expected (they're testing error cases)
+
+# Expected Response Structure:
+# {
+#   "success": true|false,
+#   "message": "optional message",
+#   "post": { /* single post object */ },
+#   "posts": [ /* array of posts */ ]
+# }
+
+# Post Object Structure:
+# {
+#   "id": "uuid",
+#   "title": "string",
+#   "owner_id": "uuid", 
+#   "description": "string"
+# }
