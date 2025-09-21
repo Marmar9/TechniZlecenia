@@ -16,7 +16,7 @@ use axum::{
     http::{StatusCode, HeaderValue, Method},
     routing::{delete, get, post as post_method},
 };
-use tower_http::{trace::TraceLayer, cors::CorsLayer};
+use tower_http::{trace::TraceLayer, cors::{CorsLayer, AllowOrigin}};
 
 use crate::app::AppState;
 
@@ -54,8 +54,11 @@ pub fn init_router() -> Router<AppState> {
             )
             .layer(
                 CorsLayer::new()
-                    .allow_origin("https://oxylize.com".parse::<HeaderValue>().unwrap())
-                    .allow_origin("https://www.oxylize.com".parse::<HeaderValue>().unwrap())
+                    .allow_origin(AllowOrigin::list(vec![
+                        "https://oxylize.com".parse::<HeaderValue>().unwrap(),
+                        "https://www.oxylize.com".parse::<HeaderValue>().unwrap(),
+                        "http://localhost:3000".parse::<HeaderValue>().unwrap(),
+                    ]))
                     .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
                     .allow_headers([
                         axum::http::header::CONTENT_TYPE,
