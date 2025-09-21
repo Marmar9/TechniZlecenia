@@ -2,7 +2,7 @@
 
 # Variables
 @baseUrl = http://localhost:3000
-@accessToken = your_access_token_here
+@accessToken = eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJleHAiOjE3NTg0ODk5MjAsInN1YiI6ImM4NjQ0ZTg4LWZlMzEtNDg3Ni1iYzU3LWFiNmJmNzRjMzY5MCJ9.ZaSO2W4z6G93Qj-hX_u97IRH6DH6VEX4-sREr06YG3E
 
 ### 1. Get all posts (with pagination)
 GET {{baseUrl}}/posts

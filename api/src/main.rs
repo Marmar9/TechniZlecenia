@@ -1,5 +1,4 @@
-use axum::{Router, routing::get};
-use tower_http::trace::TraceLayer;
+// Removed unused imports
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
 use crate::{api::app::init_router, app::AppState};

@@ -8,6 +8,7 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
+use chrono::{DateTime, Utc};
 
 use crate::{
     app::AppState,
@@ -25,33 +26,54 @@ pub struct GetPostsQuery {
 pub struct CreatePostRequest {
     pub title: String,
     pub description: String,
+    pub r#type: String,
+    pub subject: String,
+    pub price: f64,
+    pub deadline: Option<DateTime<Utc>>,
+    pub urgent: bool,
+    pub location: Option<String>,
+    #[serde(rename = "preferredContactMethod")]
+    pub preferred_contact_method: Option<String>,
+    #[serde(rename = "academicLevel")]
+    pub academic_level: Option<String>,
+    pub difficulty: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
 pub struct UpdatePostRequest {
-    pub id: Uuid,
     pub title: Option<String>,
     pub description: Option<String>,
+    pub r#type: Option<String>,
+    pub subject: Option<String>,
+    pub price: Option<f64>,
+    pub deadline: Option<DateTime<Utc>>,
+    pub urgent: Option<bool>,
+    pub location: Option<String>,
+    #[serde(rename = "preferredContactMethod")]
+    pub preferred_contact_method: Option<String>,
+    #[serde(rename = "academicLevel")]
+    pub academic_level: Option<String>,
+    pub difficulty: Option<String>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct GetPostsResponse {
-    pub posts: Vec<Post>,
+    pub posts: Vec<PostResponse>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct GetPostResponse {
-    pub post: Post,
+    pub post: PostResponse,
 }
 
 #[derive(Debug, Serialize)]
 pub struct CreatePostResponse {
-    pub post: Post,
+    pub post: PostResponse,
 }
 
 #[derive(Debug, Serialize)]
 pub struct UpdatePostResponse {
-    pub post: Post,
+    pub post: PostResponse,
 }
 
 #[derive(Debug, Serialize)]
@@ -64,27 +86,97 @@ pub struct ErrorResponse {
     pub message: String,
 }
 
+// Response format that matches frontend expectations
+#[derive(Debug, Serialize)]
+pub struct PostResponse {
+    pub id: String,
+    pub title: String,
+    pub description: String,
+    pub r#type: String,
+    pub subject: String,
+    pub price: f64,
+    pub deadline: Option<String>,
+    pub urgent: bool,
+    pub status: String,
+    #[serde(rename = "createdAt")]
+    pub created_at: String,
+    #[serde(rename = "updatedAt")]
+    pub updated_at: String,
+    
+    // Owner information
+    pub owner_id: String,
+    pub owner_name: String,
+    pub owner_username: String,
+    pub owner_avatar: Option<String>,
+    pub owner_rating: f64,
+    
+    // Post metadata
+    #[serde(rename = "viewCount")]
+    pub view_count: i32,
+    #[serde(rename = "responseCount")]
+    pub response_count: i32,
+    
+    // Optional fields
+    pub location: Option<String>,
+    #[serde(rename = "preferredContactMethod")]
+    pub preferred_contact_method: Option<String>,
+    #[serde(rename = "academicLevel")]
+    pub academic_level: Option<String>,
+    pub difficulty: Option<String>,
+}
+
+impl From<Post> for PostResponse {
+    fn from(post: Post) -> Self {
+        Self {
+            id: post.id.to_string(),
+            title: post.title,
+            description: post.description,
+            r#type: post.r#type,
+            subject: post.subject,
+            price: post.price.to_string().parse().unwrap_or(0.0),
+            deadline: post.deadline.map(|d| d.to_rfc3339()),
+            urgent: post.urgent,
+            status: post.status,
+            created_at: post.created_at.to_rfc3339(),
+            updated_at: post.updated_at.to_rfc3339(),
+            owner_id: post.owner_id.to_string(),
+            owner_name: post.owner_name,
+            owner_username: post.owner_username,
+            owner_avatar: None, // TODO: Convert bytea to base64 if needed
+            owner_rating: post.owner_rating.to_string().parse().unwrap_or(4.5),
+            view_count: post.view_count,
+            response_count: post.response_count,
+            location: post.location,
+            preferred_contact_method: post.preferred_contact_method,
+            academic_level: post.academic_level,
+            difficulty: post.difficulty,
+        }
+    }
+}
+
 impl GetPostsResponse {
     pub fn new(posts: Vec<Post>) -> Self {
-        Self { posts }
+        Self { 
+            posts: posts.into_iter().map(PostResponse::from).collect() 
+        }
     }
 }
 
 impl GetPostResponse {
     pub fn new(post: Post) -> Self {
-        Self { post }
+        Self { post: PostResponse::from(post) }
     }
 }
 
 impl CreatePostResponse {
     pub fn new(post: Post) -> Self {
-        Self { post }
+        Self { post: PostResponse::from(post) }
     }
 }
 
 impl UpdatePostResponse {
     pub fn new(post: Post) -> Self {
-        Self { post }
+        Self { post: PostResponse::from(post) }
     }
 }
 
@@ -148,6 +240,7 @@ pub async fn create_post(
     let db = &app.db;
     let user_id = token.sub;
 
+    // Validation
     if request.title.trim().is_empty() {
         return (
             StatusCode::BAD_REQUEST,
@@ -164,33 +257,86 @@ pub async fn create_post(
             .into_response();
     }
 
-    if let Ok(post) = db::posts::create_post(db, request.title, request.description, user_id).await
-    {
-        (StatusCode::CREATED, Json(CreatePostResponse::new(post))).into_response()
-    } else {
-        (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("Failed to create post".to_string())),
+    if !["request", "offer"].contains(&request.r#type.as_str()) {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("Type must be 'request' or 'offer'".to_string())),
         )
-            .into_response()
+            .into_response();
+    }
+
+    if request.subject.trim().is_empty() {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("Subject cannot be empty".to_string())),
+        )
+            .into_response();
+    }
+
+    if request.price < 0.0 {
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(ErrorResponse::new("Price cannot be negative".to_string())),
+        )
+            .into_response();
+    }
+
+    let price_decimal = rust_decimal::Decimal::from_f64_retain(request.price)
+        .unwrap_or_else(|| rust_decimal::Decimal::new(0, 0));
+
+    match db::posts::create_post(
+        db,
+        request.title,
+        request.description,
+        request.r#type,
+        request.subject,
+        price_decimal,
+        request.deadline,
+        request.urgent,
+        user_id,
+        request.location,
+        request.preferred_contact_method,
+        request.academic_level,
+        request.difficulty,
+    ).await {
+        Ok(post) => (StatusCode::CREATED, Json(CreatePostResponse::new(post))).into_response(),
+        Err(e) => {
+            tracing::error!("Failed to create post: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("Failed to create post".to_string())),
+            )
+                .into_response()
+        }
     }
 }
 
-// POST /posts/update - Update an existing post
+// PUT /posts/:id - Update an existing post
 pub async fn update_post(
     State(app): State<AppState>,
     token: AccessToken,
+    Path(post_id): Path<Uuid>,
     Json(request): Json<UpdatePostRequest>,
 ) -> impl IntoResponse {
     let db = &app.db;
     let user_id = token.sub;
 
     // Validate that at least one field is being updated
-    if request.title.is_none() && request.description.is_none() {
+    if request.title.is_none() 
+        && request.description.is_none() 
+        && request.r#type.is_none()
+        && request.subject.is_none()
+        && request.price.is_none()
+        && request.deadline.is_none()
+        && request.urgent.is_none()
+        && request.location.is_none()
+        && request.preferred_contact_method.is_none()
+        && request.academic_level.is_none()
+        && request.difficulty.is_none() {
         return (
             StatusCode::BAD_REQUEST,
             Json(ErrorResponse::new(
-                "At least one field (title or description) must be provided for update".to_string(),
+                "At least one field must be provided for update".to_string(),
             )),
         )
             .into_response();
@@ -217,8 +363,57 @@ pub async fn update_post(
         }
     }
 
-    match db::posts::update_post(db, request.id, request.title, request.description, user_id).await
-    {
+    if let Some(ref r#type) = request.r#type {
+        if !["request", "offer"].contains(&r#type.as_str()) {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new("Type must be 'request' or 'offer'".to_string())),
+            )
+                .into_response();
+        }
+    }
+
+    if let Some(ref subject) = request.subject {
+        if subject.trim().is_empty() {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new("Subject cannot be empty".to_string())),
+            )
+                .into_response();
+        }
+    }
+
+    if let Some(price) = request.price {
+        if price < 0.0 {
+            return (
+                StatusCode::BAD_REQUEST,
+                Json(ErrorResponse::new("Price cannot be negative".to_string())),
+            )
+                .into_response();
+        }
+    }
+
+    let price_decimal = request.price.map(|p| {
+        rust_decimal::Decimal::from_f64_retain(p)
+            .unwrap_or_else(|| rust_decimal::Decimal::new(0, 0))
+    });
+
+    match db::posts::update_post(
+        db, 
+        post_id, 
+        request.title, 
+        request.description,
+        request.r#type,
+        request.subject,
+        price_decimal,
+        request.deadline,
+        request.urgent,
+        request.location,
+        request.preferred_contact_method,
+        request.academic_level,
+        request.difficulty,
+        user_id
+    ).await {
         Ok(Some(post)) => (StatusCode::OK, Json(UpdatePostResponse::new(post))).into_response(),
         Ok(None) => (
             StatusCode::NOT_FOUND,
@@ -227,11 +422,14 @@ pub async fn update_post(
             )),
         )
             .into_response(),
-        Err(_) => (
-            StatusCode::INTERNAL_SERVER_ERROR,
-            Json(ErrorResponse::new("Failed to update post".to_string())),
-        )
-            .into_response(),
+        Err(e) => {
+            tracing::error!("Failed to update post: {:?}", e);
+            (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                Json(ErrorResponse::new("Failed to update post".to_string())),
+            )
+                .into_response()
+        }
     }
 }
 

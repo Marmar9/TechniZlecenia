@@ -2,19 +2,17 @@
 
 use crate::{
     api::{
-        app,
         auth::{login, refresh, register},
         post,
         user,
     },
-    error::Result,
     server::auth::AccessToken,
 };
 use axum::{
     Router,
     extract::State,
-    http::{StatusCode, HeaderValue, Method},
-    routing::{delete, get, post as post_method},
+    http::{HeaderValue, Method},
+    routing::{delete, get, post as post_method, put},
 };
 use tower_http::{trace::TraceLayer, cors::{CorsLayer, AllowOrigin}};
 
@@ -36,7 +34,7 @@ pub fn init_router() -> Router<AppState> {
                     .route("/", get(post::get_posts))
                     .route("/{id}", get(post::get_post_by_id))
                     .route("/create", post_method(post::create_post))
-                    .route("/update", post_method(post::update_post))
+                    .route("/{id}", put(post::update_post))
                     .route("/{id}", delete(post::delete_post)),
             )
             .nest(
@@ -47,7 +45,7 @@ pub fn init_router() -> Router<AppState> {
             .route(
                 "/test",
                 get(
-                    |State(app): State<AppState>, token: AccessToken| async move {
+                    |State(_app): State<AppState>, token: AccessToken| async move {
                         token.sub.to_string()
                     },
                 ),
