@@ -1,20 +1,15 @@
 use crate::{
-    common::ValidatedEmail,
     error::Result,
     server::{
-        auth::{PasswordHash, RawCredentials, Salt},
-        user::User,
+        auth::{PasswordHash, Salt},
+        credentials::{CredentialError, Credentials, StoredCredentials, Valid},
     },
 };
 
-use axum::{extract::Query, routing::trace_service};
 use chrono::{DateTime, Utc};
 use sqlx::PgPool;
 use uuid::Uuid;
-
-use crate::server::auth::Credentials;
-
-pub async fn get_credentials(db: &PgPool, raw_credentials: RawCredentials) -> Result<Credentials> {
+pub async fn get_stored_credentials(db: &PgPool, user_id: Uuid) -> Result<StoredCredentials> {
     struct Query {
         id: Uuid,
         password_hash: PasswordHash,
@@ -24,18 +19,17 @@ pub async fn get_credentials(db: &PgPool, raw_credentials: RawCredentials) -> Re
     let query = sqlx::query_as!(
         Query,
         r#"
-        select id, password_hash, salt from users where email = $1 limit 1;
+        select id, password_hash, salt from users where id = $1 limit 1;
         "#,
-        raw_credentials.email
+        user_id
     )
     .fetch_one(db)
     .await?;
 
-    Ok(Credentials::new(
-        raw_credentials,
+    Ok(StoredCredentials::new(
+        query.id,
         query.password_hash,
         query.salt,
-        query.id,
     ))
 }
 
@@ -83,16 +77,16 @@ pub async fn is_username_taken(db: &PgPool, username: &String) -> bool {
     .unwrap()
 }
 
-pub async fn is_email_taken(db: &PgPool, email: &ValidatedEmail) -> bool {
+pub async fn is_email_taken(db: &PgPool, email: String) -> bool {
     sqlx::query_scalar!(
         r#"
         SELECT EXISTS (
-            SELECT 1 
+            SELECT 1  
             FROM users 
             WHERE email = $1
         )
         "#,
-        email.0
+        email
     )
     .fetch_one(db)
     .await
@@ -102,9 +96,7 @@ pub async fn is_email_taken(db: &PgPool, email: &ValidatedEmail) -> bool {
 
 pub async fn add_user(
     db: &PgPool,
-    email: ValidatedEmail,
-    password_hash: PasswordHash,
-    salt: Salt,
+    credentials: Credentials<Valid>,
     username: String,
 ) -> Result<()> {
     #[derive(Debug)]
@@ -116,6 +108,8 @@ pub async fn add_user(
         created_at: DateTime<Utc>,
     }
 
+    let (email, password, salt) = credentials.prepare();
+
     let query = sqlx::query_as!(
         Query,
         r#"
@@ -123,10 +117,10 @@ pub async fn add_user(
         values ($1, $2, $3, $4, null)
         RETURNING id, username, email, token_ver, created_at
         "#,
-        email.0,
+        email,
         username,
         &salt,
-        &password_hash,
+        &password,
     )
     .fetch_one(db)
     .await?;
@@ -134,6 +128,18 @@ pub async fn add_user(
     tracing::info!("Created a user: {:?}", &query);
 
     Ok(())
+}
+
+pub async fn get_user_id_by_email(db: &PgPool, email: String) -> Result<Uuid> {
+    Ok(sqlx::query_scalar!(
+        r#"
+        select id from users where email = $1;
+        "#,
+        email
+    )
+    .fetch_optional(db)
+    .await?
+    .ok_or(CredentialError::InvalidEmail)?)
 }
 
 // pub async fn insert_user() -> Result<Uuid> {}

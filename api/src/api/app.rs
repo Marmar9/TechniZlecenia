@@ -1,7 +1,10 @@
 // Entire app router
 
 use crate::{
-    api::{app, auth::register},
+    api::{
+        app,
+        auth::{login, refresh, register},
+    },
     error::Result,
     server::auth::AccessToken,
 };
@@ -18,10 +21,12 @@ use crate::app::AppState;
 pub fn init_router() -> Router<AppState> {
     let router =
         Router::new()
-            .nest("/auth", Router::new().route("/register", post(register)))
-            .route(
-                "/login",
-                get(|| async { (StatusCode::NO_CONTENT, "Login is not yet implemented") }),
+            .nest(
+                "/auth",
+                Router::new()
+                    .route("/register", post(register))
+                    .route("/login", post(login))
+                    .route("/refresh", post(refresh)),
             )
             .route(
                 "/test",

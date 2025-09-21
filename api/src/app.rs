@@ -1,5 +1,6 @@
 use crate::common::env;
 use crate::error::Result;
+use axum::response::IntoResponse;
 use sqlx::PgPool;
 
 #[derive(Clone)]

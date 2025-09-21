@@ -1,45 +1,25 @@
+use crate::db;
+use crate::server::credentials::CredentialError;
 use crate::{
     common::env,
-    db::users::get_credentials,
     error::{AppError, Result},
+    server::credentials::{Credentials, Valid},
 };
 use argon2::{
     Argon2,
     password_hash::rand_core::{OsRng, RngCore},
 };
-use async_trait::async_trait;
 use axum::{
     extract::FromRequestParts,
     http::{StatusCode, request::Parts},
 };
-use chrono::Utc;
-use core::error;
 use jsonwebtoken::{DecodingKey, Validation};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
 use sqlx::{PgPool, Pool, Postgres, Type, postgres::PgTypeInfo};
-use std::{ops::Deref, os::linux::raw, sync::LazyLock};
-use thiserror::Error;
+use std::{ops::Deref, sync::LazyLock};
 use uuid::Uuid;
 
 const HASH_LEN: usize = 32;
-
-#[derive(Debug, Error)]
-pub enum AuthError {
-    #[error("Blocked domain: {0}")]
-    EmailDomainError(String),
-    #[error("{0} Expired")]
-    ExpiredToken(#[from] TokenKind),
-    #[error("Invalid Credentials")]
-    InvalidCredentials {},
-}
-
-#[derive(Debug, Error)]
-pub enum TokenKind {
-    #[error("Access Token")]
-    Access,
-    #[error("Refresh Token")]
-    Refresh,
-}
 
 #[derive(Clone, sqlx::Decode, sqlx::Encode, Debug, PartialEq, Eq)]
 pub struct PasswordHash(Vec<u8>);
@@ -173,6 +153,7 @@ where
 pub struct RefreshToken {
     pub exp: usize, // Epoch expiration
     pub ver: Uuid,  // token verison
+    pub sub: Uuid,
 }
 
 impl<'a> JwtToken<'a> for RefreshToken {}
@@ -182,61 +163,14 @@ impl RefreshToken {
         self.exp > jsonwebtoken::get_current_timestamp() as usize
     }
 
-    fn new(ver: Uuid) -> Self {
+    fn new(ver: Uuid, sub: Uuid) -> Self {
         Self {
-            exp: jsonwebtoken::get_current_timestamp() as usize + 60 * 24 * 14, // 14 days
+            exp: jsonwebtoken::get_current_timestamp() as usize + 60 * 60 * 24 * 14, // 14 days
             ver,
+            sub,
         }
     }
 }
-
-/// wrapper for user credentials
-/// does not guarantee that the credentials inside are valid ones
-/// this is returned when you query the db for credentials
-pub struct Credentials {
-    user_id: Uuid,               // users id
-    password_hash: PasswordHash, // the password in the db
-    password_raw: Vec<u8>,       // raw password from the request
-    salt: Salt,                  // salt from the db
-}
-
-impl Credentials {
-    pub fn new(
-        raw_creds: RawCredentials,
-        password_hash: PasswordHash,
-        salt: Salt,
-        user_id: Uuid,
-    ) -> Self {
-        Self {
-            user_id,
-            salt,
-            password_hash,
-            password_raw: raw_creds.password,
-        }
-    }
-}
-
-/// wrapper for raw unidentified credentials, no checks or anything
-/// use `RawCredentials::process()` to verify the email, hash
-/// the password using the user data from the verfied email
-/// and return it as Credentials
-pub struct RawCredentials {
-    password: Vec<u8>,
-    pub email: String,
-}
-
-impl RawCredentials {
-    pub async fn process(self, db: &PgPool) -> Result<Credentials> {
-        get_credentials(db, self).await
-    }
-    pub fn new(email: String, password: String) -> Self {
-        Self {
-            email,
-            password: password.into_bytes(),
-        }
-    }
-}
-
 pub struct Auth;
 
 impl Auth {
@@ -272,24 +206,17 @@ impl Auth {
 
         (password_hash, salt)
     }
-
-    /// Validates the raw password from credentials
-    pub fn validate_password(creds: Credentials) -> bool {
-        let (hash, _) = Self::hash_password(creds.password_raw, Some(creds.salt));
-        *hash == *creds.password_hash
-    }
 }
 
 impl Auth {
     /// Takes in a refresh token and tries to mind a new access token from it.
     pub async fn mint_access_token(
-        refresh_token: RefreshToken,
-        user_id: Uuid,
+        refresh_token: &RefreshToken,
         db: &PgPool,
     ) -> Result<AccessToken> {
-        let token_ver = crate::db::users::get_token_version(db, user_id).await?;
+        let token_ver = crate::db::users::get_token_version(db, refresh_token.sub).await?;
         if token_ver == refresh_token.ver && refresh_token.is_valid() {
-            Ok(AccessToken::new(user_id))
+            Ok(AccessToken::new(refresh_token.sub.clone()))
         } else {
             Err(AppError::GenericError(
                 "Invalid token version or refresh token is expired".into(),
@@ -300,16 +227,20 @@ impl Auth {
     /// Takes in credentials and attempts to create a refresh token for them
     /// invalidates refresh all refresh tokens
     pub async fn mint_refresh_token(
-        raw_creds: RawCredentials,
+        credentials: Credentials<Valid>,
         db: &PgPool,
     ) -> Result<RefreshToken> {
-        let creds = raw_creds.process(db).await?;
-        let token_ver = crate::db::users::update_token_ver(db, creds.user_id).await?;
-        let (password_hash, _) = Auth::hash_password(creds.password_raw, Some(creds.salt));
-        if creds.password_hash == password_hash {
-            Ok(RefreshToken::new(token_ver))
-        } else {
-            Err(AppError::GenericError("Passwords do not match".into()))
-        }
+        let user_id = db::users::get_user_id_by_email(db, credentials.get_email())
+            .await
+            .ok()
+            .ok_or(CredentialError::InvalidEmail)?;
+
+        let stored_credentials = db::users::get_stored_credentials(db, user_id).await?;
+
+        let token_ver = db::users::update_token_ver(db, user_id).await?;
+
+        stored_credentials.check_credentials(credentials)?;
+
+        Ok(RefreshToken::new(token_ver, user_id))
     }
 }

@@ -3,6 +3,24 @@ Content-Type: application/json
 
 {
     "username":"reoh",
-    "password":"reoh1234",
-    "email":"u110_lukdab_waw@technischools.com"
+    "credentials": {
+        "password":"reoh1234",
+        "email":"u110_lukdab_waw@technischools.com"
+    }
 }
+
+###
+
+POST http://localhost:3000/auth/login
+Content-Type: application/json
+
+{
+    "credentials": {
+        "password":"reoh1234",
+        "email":"u110_lukdab_waw@technischools.com"
+    }
+}
+
+###
+
+POST http://localhost:3000/auth/refresh
