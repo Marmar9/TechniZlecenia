@@ -54,11 +54,8 @@ pub fn init_router() -> Router<AppState> {
             )
             .layer(
                 CorsLayer::new()
-                    .allow_origin("http://localhost:3000".parse::<HeaderValue>().unwrap())
-                    .allow_origin("http://localhost:3001".parse::<HeaderValue>().unwrap())
                     .allow_origin("https://oxylize.com".parse::<HeaderValue>().unwrap())
                     .allow_origin("https://www.oxylize.com".parse::<HeaderValue>().unwrap())
-                    .allow_origin("https://api.oxylize.com".parse::<HeaderValue>().unwrap())
                     .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE, Method::OPTIONS])
                     .allow_headers([
                         axum::http::header::CONTENT_TYPE,
