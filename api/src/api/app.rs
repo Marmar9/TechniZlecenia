@@ -42,6 +42,11 @@ pub fn init_router() -> Router<AppState> {
                 Router::new()
                     .route("/me", get(user::get_current_user)),
             )
+            .nest(
+                "/users",
+                Router::new()
+                    .route("/{id}", get(user::get_user_by_id)),
+            )
             .route(
                 "/test",
                 get(

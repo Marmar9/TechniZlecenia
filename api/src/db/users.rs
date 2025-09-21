@@ -144,12 +144,20 @@ pub async fn get_user_id_by_email(db: &PgPool, email: String) -> Result<Uuid> {
 
 use crate::api::user::UserInfo;
 
-// Get user by ID for API responses
-pub async fn get_user_by_id(db: &PgPool, user_id: Uuid) -> Result<Option<UserInfo>> {
-    let user = sqlx::query_as!(
-        UserInfo,
+// Get user by ID for API responses (public information)
+pub async fn get_user_by_id_public(db: &PgPool, user_id: Uuid) -> Result<Option<UserInfo>> {
+    #[derive(Debug)]
+    struct UserQuery {
+        id: Uuid,
+        username: String,
+        email: String,
+        created_at: DateTime<Utc>,
+    }
+
+    let user_query = sqlx::query_as!(
+        UserQuery,
         r#"
-        SELECT id, username, email
+        SELECT id, username, email, created_at
         FROM users
         WHERE id = $1
         "#,
@@ -158,5 +166,19 @@ pub async fn get_user_by_id(db: &PgPool, user_id: Uuid) -> Result<Option<UserInf
     .fetch_optional(db)
     .await?;
 
-    Ok(user)
+    if let Some(user) = user_query {
+        Ok(Some(UserInfo {
+            id: user.id.to_string(),
+            username: user.username.clone(),
+            name: Some(user.username), // Use username as name for now
+            email: user.email,
+            rating: Some(4.5), // Default rating for now
+            total_earnings: Some(0.0), // Default earnings
+            completed_jobs: Some(0), // Default completed jobs
+            join_date: Some(user.created_at.format("%B %Y").to_string()),
+            subjects: Some(vec![]), // Default empty subjects
+        }))
+    } else {
+        Ok(None)
+    }
 }
