@@ -142,6 +142,21 @@ pub async fn get_user_id_by_email(db: &PgPool, email: String) -> Result<Uuid> {
     .ok_or(CredentialError::InvalidEmail)?)
 }
 
-// pub async fn insert_user() -> Result<Uuid> {}
+use crate::api::user::UserInfo;
 
-// pub async fn get_user() -> Result<User> {}
+// Get user by ID for API responses
+pub async fn get_user_by_id(db: &PgPool, user_id: Uuid) -> Result<Option<UserInfo>> {
+    let user = sqlx::query_as!(
+        UserInfo,
+        r#"
+        SELECT id, username, email
+        FROM users
+        WHERE id = $1
+        "#,
+        user_id
+    )
+    .fetch_optional(db)
+    .await?;
+
+    Ok(user)
+}

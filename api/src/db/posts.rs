@@ -92,14 +92,42 @@ pub async fn update_post(
         return Ok(None);
     }
 
-    // ⚠️ Problem: macros need fixed SQL at compile time.
-    // Since your UPDATE query is dynamic (optional fields),
-    // we cannot use `query_as!` here.
-    // For dynamic SQL, you must keep `query_as::<_, Post>`.
-
-    // So we leave this one as-is:
-    // (or rewrite logic to always update both fields with COALESCE)
-    Ok(get_post_by_id(db, post_id).await?)
+    // Build the update query dynamically
+    let mut query_parts = Vec::new();
+    let mut param_count = 3; // Starting after post_id and owner_id
+    
+    if title.is_some() {
+        query_parts.push(format!("title = ${}", param_count));
+        param_count += 1;
+    }
+    
+    if description.is_some() {
+        query_parts.push(format!("description = ${}", param_count));
+    }
+    
+    if query_parts.is_empty() {
+        return Ok(get_post_by_id(db, post_id).await?);
+    }
+    
+    let query_str = format!(
+        "UPDATE posts SET {} WHERE id = $1 AND owner_id = $2 RETURNING id, title, owner_id, description",
+        query_parts.join(", ")
+    );
+    
+    let mut query = sqlx::query_as::<_, Post>(&query_str)
+        .bind(post_id)
+        .bind(owner_id);
+    
+    if let Some(title_val) = title {
+        query = query.bind(title_val);
+    }
+    
+    if let Some(description_val) = description {
+        query = query.bind(description_val);
+    }
+    
+    let updated_post = query.fetch_optional(db).await?;
+    Ok(updated_post)
 }
 
 pub async fn delete_post(db: &PgPool, post_id: Uuid, owner_id: Uuid) -> Result<bool> {
