@@ -11,7 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PostCard } from "@/components/post-card"
 import { CreatePostModal } from "@/components/create-post-modal"
 import { Edit, Plus, Star, DollarSign, BookOpen, Calendar, MapPin, Mail, Phone, Save, X } from "lucide-react"
-import { useToast } from "@/hooks/use-toast"
+import { toast } from "sonner"
 
 const defaultUser = {
   id: "current-user",
@@ -33,7 +33,6 @@ export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false)
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [editingPost, setEditingPost] = useState<any>(null)
-  const { toast } = useToast()
 
   const [currentUser, setCurrentUser] = useState(() => {
     if (typeof window !== "undefined") {
@@ -98,10 +97,7 @@ export default function ProfilePage() {
       }
     }
 
-    toast({
-      title: "Profile updated",
-      description: "Your profile has been saved successfully.",
-    })
+    toast.success("Profile updated successfully!")
     setIsEditing(false)
   }
 
@@ -169,10 +165,10 @@ export default function ProfilePage() {
                     }}
                   />
                   <AvatarFallback className="bg-primary text-primary-foreground text-lg">
-                    {editedUser.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")}
+                      {editedUser.name
+                        .split(" ")
+                        .map((n: string) => n[0])
+                        .join("")}
                   </AvatarFallback>
                 </Avatar>
                 <div>
@@ -294,7 +290,7 @@ export default function ProfilePage() {
                   <div>
                     <p className="text-sm text-muted-foreground mb-2">Subjects:</p>
                     <div className="flex flex-wrap gap-1">
-                      {editedUser.subjects.map((subject) => (
+                      {editedUser.subjects.map((subject: string) => (
                         <Badge key={subject} variant="secondary" className="text-xs">
                           {subject}
                         </Badge>
