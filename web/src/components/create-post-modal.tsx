@@ -1,8 +1,8 @@
 "use client"
 
-import React, { useId } from "react"
-import { useState } from "react"
-import { toast } from "sonner"
+import React from "react"
+
+import { useState, useId } from "react"
 import { Button } from "@/components/ui/button"
 import {
   Dialog,
@@ -17,30 +17,9 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
-
-interface Post {
-  id: string
-  type: "request" | "offer"
-  title: string
-  description: string
-  subject: string
-  price: number
-  deadline?: string
-  author: {
-    name: string
-    avatar?: string
-    rating: number
-  }
-  createdAt: string
-  urgent: boolean
-}
-
-interface CreatePostModalProps {
-  isOpen: boolean
-  onClose: () => void
-  onPostCreated?: (post: Post) => void
-  editingPost?: Post
-}
+import { useToast } from "@/hooks/use-toast"
+import { postsAPI } from "@/lib/api"
+import type { CreatePostModalProps, Post, PostData } from "@/types/api"
 
 export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }: CreatePostModalProps) {
   const [postType, setPostType] = useState<"request" | "offer">(editingPost?.type || "request")
@@ -51,8 +30,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
   const [deadline, setDeadline] = useState(editingPost?.deadline || "")
   const [isUrgent, setIsUrgent] = useState(editingPost?.urgent || false)
   const [isSubmitting, setIsSubmitting] = useState(false)
-
-  // Generate stable IDs for form elements
+  const { toast } = useToast()
   const titleId = useId()
   const descriptionId = useId()
   const priceId = useId()
@@ -60,21 +38,18 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
   const urgentId = useId()
 
   const subjects = [
-    "Mathematics",
-    "Chemistry",
-    "Physics",
-    "Biology",
-    "Computer Science",
-    "History",
-    "English",
-    "Psychology",
-    "Economics",
-    "Statistics",
-    "Languages",
-    "Engineering",
-    "Art",
-    "Music",
-    "Other",
+    "Zawodowe",
+    "Matematyka",
+    "Chemia",
+    "Fizyka",
+    "Biologia",
+    "Informatyka",
+    "Historia",
+    "Język angielski",
+    "Statystyka",
+    "Języki obce",
+    "Inżynieria",
+    "Inne",
   ]
 
   React.useEffect(() => {
@@ -87,8 +62,8 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
       setDeadline("")
       setIsUrgent(false)
     } else if (isOpen && editingPost) {
-      setPostType(editingPost.type)
-      setSubject(editingPost.subject)
+      setPostType(editingPost.type || "request")
+      setSubject(editingPost.subject || "")
       setTitle(editingPost.title)
       setDescription(editingPost.description)
       setPrice(editingPost.price?.toString() || "")
@@ -101,56 +76,65 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
     e.preventDefault()
 
     if (!title.trim() || !description.trim() || !subject) {
-      toast.error("Please fill in all required fields.")
+      toast({
+        title: "Brakujące informacje",
+        description: "Proszę wypełnić wszystkie wymagane pola.",
+        variant: "destructive",
+      })
       return
     }
 
     setIsSubmitting(true)
 
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000))
-
-    const currentUser = JSON.parse(
-      localStorage.getItem("currentUser") || '{"name": "You", "avatar": "/placeholder.svg", "rating": 4.5}',
-    )
-
-    const newPost = {
-      id: editingPost?.id || Date.now().toString(),
-      type: postType,
-      title: title.trim(),
-      description: description.trim(),
-      subject,
-      price: price ? Number.parseInt(price) : 0,
-      deadline: deadline || undefined,
-      author: currentUser,
-      createdAt: editingPost?.createdAt || "Just now",
-      urgent: isUrgent,
-    }
-
-    if (onPostCreated) {
-      onPostCreated(newPost)
-    }
-
-    toast.success(
-      editingPost ? "Post updated successfully!" : "Post created successfully!",
-      {
-        description: `Your ${postType} has been ${editingPost ? "updated" : "posted"} to the marketplace.`,
+    try {
+      const postData: PostData = {
+        type: postType,
+        title: title.trim(),
+        description: description.trim(),
+        subject,
+        price: price ? Number.parseInt(price) : 0,
+        deadline: deadline || undefined,
+        urgent: isUrgent,
       }
-    )
 
-    setIsSubmitting(false)
-    onClose()
+      let result: Post
+      if (editingPost) {
+        result = await postsAPI.updatePost(editingPost.id, postData)
+      } else {
+        result = await postsAPI.createPost(postData)
+      }
+
+      if (onPostCreated) {
+        onPostCreated(result)
+      }
+
+      toast({
+        title: editingPost ? "Ogłoszenie zaktualizowane!" : "Ogłoszenie utworzone!",
+        description: `Twoje ${postType === "request" ? "zapytanie" : "oferta"} zostało ${editingPost ? "zaktualizowane" : "opublikowane"} na rynku.`,
+      })
+
+      onClose()
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Wystąpił nieznany błąd'
+      toast({
+        title: editingPost ? "Aktualizacja nieudana" : "Tworzenie nieudane",
+        description: errorMessage,
+        variant: "destructive",
+      })
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[525px] bg-popover border-border">
         <DialogHeader>
-          <DialogTitle className="text-popover-foreground">{editingPost ? "Edit Post" : "Create New Post"}</DialogTitle>
+          <DialogTitle className="text-popover-foreground">{editingPost ? "Edytuj ogłoszenie" : "Utwórz nowe ogłoszenie"}</DialogTitle>
           <DialogDescription className="text-muted-foreground">
             {editingPost
-              ? "Update your post details."
-              : "Post a request for help or offer your tutoring services to fellow students."}
+              ? "Zaktualizuj szczegóły swojego ogłoszenia."
+              : "Opublikuj zapytanie o pomoc lub zaoferuj swoje usługi korepetycji innym studentom."}
           </DialogDescription>
         </DialogHeader>
 
@@ -159,26 +143,26 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="type" className="text-popover-foreground">
-                  Post Type
+                  Typ ogłoszenia
                 </Label>
                 <Select value={postType} onValueChange={(value: "request" | "offer") => setPostType(value)}>
                   <SelectTrigger className="bg-input border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
-                    <SelectItem value="request">Request Help</SelectItem>
-                    <SelectItem value="offer">Offer Help</SelectItem>
+                    <SelectItem value="request">Poproś o pomoc</SelectItem>
+                    <SelectItem value="offer">Zaoferuj pomoc</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
 
               <div className="space-y-2">
                 <Label htmlFor="subject" className="text-popover-foreground">
-                  Subject *
+                  Przedmiot *
                 </Label>
                 <Select value={subject} onValueChange={setSubject}>
                   <SelectTrigger className="bg-input border-border">
-                    <SelectValue placeholder="Select subject" />
+                    <SelectValue placeholder="Wybierz przedmiot" />
                   </SelectTrigger>
                   <SelectContent className="bg-popover border-border">
                     {subjects.map((subj) => (
@@ -193,26 +177,26 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
 
             <div className="space-y-2">
               <Label htmlFor={titleId} className="text-popover-foreground">
-                Title *
+                Tytuł *
               </Label>
               <Input
                 id={titleId}
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder={postType === "request" ? "What do you need help with?" : "What can you help with?"}
+                placeholder={postType === "request" ? "Z czym potrzebujesz pomocy?" : "Z czym możesz pomóc?"}
                 className="bg-input border-border"
               />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor={descriptionId} className="text-popover-foreground">
-                Description *
+                Opis *
               </Label>
               <Textarea
                 id={descriptionId}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Provide more details about your request or offer..."
+                placeholder="Podaj więcej szczegółów dotyczących swojego zapytania lub oferty..."
                 className="bg-input border-border min-h-[100px]"
               />
             </div>
@@ -220,7 +204,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor={priceId} className="text-popover-foreground">
-                  Price ($)
+                  Cena (zł)
                 </Label>
                 <Input
                   id={priceId}
@@ -235,7 +219,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
               {postType === "request" && (
                 <div className="space-y-2">
                   <Label htmlFor={deadlineId} className="text-popover-foreground">
-                    Deadline (optional)
+                    Termin (opcjonalny)
                   </Label>
                   <Input
                     id={deadlineId}
@@ -251,7 +235,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
             <div className="flex items-center space-x-2">
               <Switch id={urgentId} checked={isUrgent} onCheckedChange={setIsUrgent} />
               <Label htmlFor={urgentId} className="text-popover-foreground">
-                Mark as urgent (additional visibility)
+                Oznacz jako pilne (dodatkowa widoczność)
               </Label>
             </div>
           </div>
@@ -264,7 +248,7 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
               className="border-border text-muted-foreground bg-transparent"
               disabled={isSubmitting}
             >
-              Cancel
+              Anuluj
             </Button>
             <Button
               type="submit"
@@ -273,11 +257,11 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
             >
               {isSubmitting
                 ? editingPost
-                  ? "Updating..."
-                  : "Creating..."
+                  ? "Aktualizowanie..."
+                  : "Tworzenie..."
                 : editingPost
-                  ? "Update Post"
-                  : "Create Post"}
+                  ? "Zaktualizuj ogłoszenie"
+                  : "Utwórz ogłoszenie"}
             </Button>
           </DialogFooter>
         </form>
@@ -285,4 +269,3 @@ export function CreatePostModal({ isOpen, onClose, onPostCreated, editingPost }:
     </Dialog>
   )
 }
-

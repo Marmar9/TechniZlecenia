@@ -31,12 +31,12 @@ export function Header({ onSearch }: HeaderProps) {
       <header className="h-16 border-b border-border bg-card px-6 flex items-center justify-between">
         <div className="flex items-center gap-4 flex-1">
           <Link href="/" className="text-xl font-semibold text-foreground hover:text-primary transition-colors">
-            StudyMarket
+          TechniZlecenia
           </Link>
           <div className="relative max-w-md flex-1">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
             <Input
-              placeholder="Search requests and offers..."
+              placeholder="Szukaj ogłoszeń i ofert..."
               className="pl-10 bg-input border-border"
               value={searchQuery}
               onChange={handleSearch}
@@ -50,7 +50,7 @@ export function Header({ onSearch }: HeaderProps) {
             onClick={() => setIsCreateModalOpen(true)}
           >
             <Plus className="h-4 w-4 mr-2" />
-            Create Post
+            Utwórz ogłoszenie
           </Button>
           <UserProfile />
         </div>

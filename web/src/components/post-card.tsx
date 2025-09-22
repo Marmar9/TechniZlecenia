@@ -1,38 +1,24 @@
 "use client"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Clock, DollarSign, MessageCircle, Star, AlertCircle, Edit, Trash2 } from "lucide-react"
-import { toast } from "sonner"
-
-interface Post {
-  id: string
-  type: "request" | "offer"
-  title: string
-  description: string
-  subject: string
-  price: number
-  deadline?: string
-  author: {
-    name: string
-    avatar: string
-    rating: number
-  }
-  createdAt: string
-  urgent?: boolean
-}
+import { Clock, DollarSign, AlertCircle, Edit, Trash2 } from "lucide-react"
+import { useToast } from "@/hooks/use-toast"
+import { formatRelativeTime, formatDeadline } from "@/lib/date-utils"
+import { useRouter } from "next/navigation"
+import type { Post, User } from "@/types/api"
 
 interface PostCardProps {
   post: Post
-  onContact: () => void
   showEditOptions?: boolean
   onEdit?: () => void
   onDelete?: () => void
 }
 
-export function PostCard({ post, onContact, showEditOptions = false, onEdit, onDelete }: PostCardProps) {
+export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: PostCardProps) {
+  const { toast } = useToast()
+  const router = useRouter()
 
   const handleEdit = () => {
     if (onEdit) {
@@ -41,21 +27,28 @@ export function PostCard({ post, onContact, showEditOptions = false, onEdit, onD
   }
 
   const handleDelete = () => {
-    if (confirm("Are you sure you want to delete this post?")) {
+    if (confirm("Czy na pewno chcesz usunąć to ogłoszenie?")) {
       if (onDelete) {
         onDelete()
-        toast.success("Post deleted", {
-          description: "Your post has been removed from the marketplace.",
+        toast({
+          title: "Ogłoszenie usunięte",
+          description: "Twoje ogłoszenie zostało usunięte z rynku.",
         })
       }
     }
   }
 
-  const currentUser =
+  const currentUser: User =
     typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("currentUser") || '{"name": "You"}')
-      : { name: "You" }
-  const isOwnPost = post.author.name === currentUser.name
+      ? JSON.parse(localStorage.getItem("currentUser") || '{"id": "", "email": "", "name": "You"}')
+      : { id: "", email: "", name: "Ty" }
+  
+  // Check if current user owns this post
+  const isOwnPost = post.owner_id === currentUser.id
+
+  const handleViewProfile = () => {
+    router.push(`/profile/${post.owner_id}`)
+  }
 
   return (
     <Card
@@ -66,43 +59,43 @@ export function PostCard({ post, onContact, showEditOptions = false, onEdit, onD
       <CardHeader className="pb-3">
         <div className="flex items-start justify-between">
           <div className="flex items-center gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarImage
-                src={post.author.avatar && post.author.avatar !== "/placeholder.svg" ? post.author.avatar : undefined}
-                alt={post.author.name}
-                onError={(e) => {
-                  // Hide broken images
-                  e.currentTarget.style.display = "none"
-                }}
-              />
-              <AvatarFallback className="bg-primary text-primary-foreground text-xs">
-                {post.author.name
-                  .split(" ")
-                  .map((n) => n[0])
-                  .join("")}
-              </AvatarFallback>
-            </Avatar>
+            <button 
+              type="button"
+              onClick={handleViewProfile}
+              className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-medium hover:bg-primary/90 transition-colors cursor-pointer"
+            >
+              {(post.owner_name || post.owner_username || "U")
+                .split(" ")
+                .map((n: string) => n[0])
+                .join("")}
+            </button>
             <div>
-              <p className="text-sm font-medium text-card-foreground">{post.author.name}</p>
-              <div className="flex items-center gap-1">
-                <Star className="h-3 w-3 fill-yellow-400 text-yellow-400" />
-                <span className="text-xs text-muted-foreground">{post.author.rating}</span>
-                <span className="text-xs text-muted-foreground">• {post.createdAt}</span>
-              </div>
+              <button 
+                type="button"
+                onClick={handleViewProfile}
+                className="text-left hover:text-primary transition-colors"
+              >
+                <p className="text-sm font-medium text-card-foreground hover:text-primary">
+                  {post.owner_name || post.owner_username || "Unknown User"}
+                </p>
+                <div className="flex items-center gap-1">
+                  <span className="text-xs text-muted-foreground">{formatRelativeTime(post.createdAt)}</span>
+                </div>
+              </button>
             </div>
           </div>
           <div className="flex items-center gap-2">
             {post.urgent && (
               <Badge variant="outline" className="border-warning text-warning">
                 <AlertCircle className="h-3 w-3 mr-1" />
-                Urgent
+                Pilne
               </Badge>
             )}
             <Badge
               variant={post.type === "request" ? "destructive" : "default"}
               className={post.type === "request" ? "bg-warning text-black" : "bg-success text-white"}
             >
-              {post.type === "request" ? "Request" : "Offer"}
+              {post.type === "request" ? "Zapytanie" : "Oferta"}
             </Badge>
           </div>
         </div>
@@ -117,7 +110,7 @@ export function PostCard({ post, onContact, showEditOptions = false, onEdit, onD
           {post.deadline && (
             <div className="flex items-center gap-1">
               <Clock className="h-3 w-3" />
-              <span>Due {post.deadline}</span>
+              <span>{formatDeadline(post.deadline)}</span>
             </div>
           )}
         </div>
@@ -129,11 +122,11 @@ export function PostCard({ post, onContact, showEditOptions = false, onEdit, onD
           {post.price}
         </div>
         <div className="flex items-center gap-2">
-          {showEditOptions && isOwnPost ? (
+          {showEditOptions && isOwnPost && (
             <>
               <Button variant="outline" size="sm" onClick={handleEdit}>
                 <Edit className="h-4 w-4 mr-2" />
-                Edit
+                Edytuj
               </Button>
               <Button
                 variant="outline"
@@ -142,18 +135,12 @@ export function PostCard({ post, onContact, showEditOptions = false, onEdit, onD
                 className="text-destructive hover:text-destructive bg-transparent"
               >
                 <Trash2 className="h-4 w-4 mr-2" />
-                Delete
+                Usuń
               </Button>
             </>
-          ) : !isOwnPost ? (
-            <Button size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground" onClick={onContact}>
-              <MessageCircle className="h-4 w-4 mr-2" />
-              Contact
-            </Button>
-          ) : null}
+          )}
         </div>
       </CardFooter>
     </Card>
   )
 }
-

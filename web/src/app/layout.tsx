@@ -4,13 +4,13 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
-import { Toaster } from "sonner"
+import { AuthGuard } from "@/components/auth-guard"
+import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "StudyMarket - Academic Help Marketplace",
-  description: "Connect with classmates for homework help, test prep, and academic services",
-  generator: "v0.app",
+  title: "TechniZlecenia",
+  description: "Technizlecenia - od ucznia dla ucznia",
 }
 
 export default function RootLayout({
@@ -19,12 +19,16 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className="dark">
+    <html lang="pl" className="dark">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <Suspense fallback={null}>{children}</Suspense>
-        <Toaster />
+        <AuthGuard>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster />
+        </AuthGuard>
         <Analytics />
       </body>
     </html>
   )
 }
+
+

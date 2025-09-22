@@ -1,11 +1,10 @@
 "use client"
-import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent } from "@/components/ui/card"
-import { Star, MapPin, Calendar, Edit } from "lucide-react"
+import { MapPin } from "lucide-react"
 
 interface ProfileModalProps {
   isOpen: boolean
@@ -16,7 +15,6 @@ const mockReviews = [
   {
     id: "1",
     reviewer: "Sarah Chen",
-    rating: 5,
     comment: "Kevin helped me understand calculus concepts really well. Very patient and knowledgeable!",
     subject: "Mathematics",
     date: "2 days ago",
@@ -24,7 +22,6 @@ const mockReviews = [
   {
     id: "2",
     reviewer: "Mike Rodriguez",
-    rating: 5,
     comment: "Excellent Python tutoring. Kevin explained complex algorithms in a simple way.",
     subject: "Computer Science",
     date: "1 week ago",
@@ -32,7 +29,6 @@ const mockReviews = [
   {
     id: "3",
     reviewer: "Emma Davis",
-    rating: 4,
     comment: "Good help with statistics homework. Would recommend!",
     subject: "Statistics",
     date: "2 weeks ago",
@@ -46,7 +42,6 @@ const mockCompletedJobs = [
     student: "Sarah Chen",
     subject: "Mathematics",
     price: 25,
-    rating: 5,
     date: "2 days ago",
   },
   {
@@ -55,7 +50,6 @@ const mockCompletedJobs = [
     student: "Mike Rodriguez",
     subject: "Computer Science",
     price: 35,
-    rating: 5,
     date: "1 week ago",
   },
   {
@@ -64,7 +58,6 @@ const mockCompletedJobs = [
     student: "Emma Davis",
     subject: "Statistics",
     price: 20,
-    rating: 4,
     date: "2 weeks ago",
   },
 ]
@@ -93,25 +86,12 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                   <h2 className="text-xl font-semibold text-popover-foreground">Kevin Student</h2>
                   <p className="text-muted-foreground">Computer Science Major</p>
                 </div>
-                <Button variant="outline" size="sm" className="border-border bg-transparent">
-                  <Edit className="h-4 w-4 mr-2" />
-                  Edit Profile
-                </Button>
               </div>
 
               <div className="flex items-center gap-4 mt-2">
-                <div className="flex items-center gap-1">
-                  <Star className="h-4 w-4 fill-warning text-warning" />
-                  <span className="font-medium">4.9</span>
-                  <span className="text-muted-foreground">(23 reviews)</span>
-                </div>
                 <div className="flex items-center gap-1 text-muted-foreground">
                   <MapPin className="h-4 w-4" />
                   <span>University Campus</span>
-                </div>
-                <div className="flex items-center gap-1 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  <span>Joined Dec 2023</span>
                 </div>
               </div>
 
@@ -123,27 +103,6 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
             </div>
           </div>
 
-          {/* Stats Cards */}
-          <div className="grid grid-cols-3 gap-4">
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-card-foreground">15</div>
-                <div className="text-sm text-muted-foreground">Jobs Completed</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-card-foreground">$847</div>
-                <div className="text-sm text-muted-foreground">Total Earned</div>
-              </CardContent>
-            </Card>
-            <Card className="bg-card border-border">
-              <CardContent className="p-4 text-center">
-                <div className="text-2xl font-bold text-card-foreground">98%</div>
-                <div className="text-sm text-muted-foreground">Success Rate</div>
-              </CardContent>
-            </Card>
-          </div>
 
           {/* Tabs */}
           <Tabs defaultValue="reviews" className="w-full">
@@ -164,14 +123,6 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                         </Badge>
                       </div>
                       <div className="flex items-center gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={`star-${review.id}-${i}`}
-                            className={`h-3 w-3 ${
-                              i < review.rating ? "fill-warning text-warning" : "text-muted-foreground"
-                            }`}
-                          />
-                        ))}
                         <span className="text-xs text-muted-foreground ml-1">{review.date}</span>
                       </div>
                     </div>
@@ -198,10 +149,6 @@ export function ProfileModal({ isOpen, onClose }: ProfileModalProps) {
                       </div>
                       <div className="text-right">
                         <div className="font-medium text-card-foreground">${job.price}</div>
-                        <div className="flex items-center gap-1">
-                          <Star className="h-3 w-3 fill-warning text-warning" />
-                          <span className="text-xs">{job.rating}</span>
-                        </div>
                       </div>
                     </div>
                   </CardContent>
