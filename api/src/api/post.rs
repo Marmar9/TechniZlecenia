@@ -20,6 +20,7 @@ use crate::{
 pub struct GetPostsQuery {
     pub page: Option<i32>,
     pub per_page: Option<i32>,
+    pub owner_id: Option<String>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -199,7 +200,23 @@ pub async fn get_posts(
 ) -> impl IntoResponse {
     let db = &app.db;
 
-    match db::posts::get_posts(db, query.page, query.per_page).await {
+    // Parse owner_id if provided
+    let owner_uuid = if let Some(ref owner_id) = query.owner_id {
+        match Uuid::parse_str(owner_id) {
+            Ok(uuid) => Some(uuid),
+            Err(_) => {
+                return (
+                    StatusCode::BAD_REQUEST,
+                    Json(ErrorResponse::new("Invalid owner ID format".to_string())),
+                )
+                .into_response()
+            }
+        }
+    } else {
+        None
+    };
+
+    match db::posts::get_posts_filtered(db, query.page, query.per_page, owner_uuid).await {
         Ok(posts) => (StatusCode::OK, Json(GetPostsResponse::new(posts))).into_response(),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,

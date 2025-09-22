@@ -10,32 +10,69 @@ pub async fn get_posts(
     page: Option<i32>,
     per_page: Option<i32>,
 ) -> Result<Vec<Post>> {
+    get_posts_filtered(db, page, per_page, None).await
+}
+
+pub async fn get_posts_filtered(
+    db: &PgPool,
+    page: Option<i32>,
+    per_page: Option<i32>,
+    owner_id: Option<Uuid>,
+) -> Result<Vec<Post>> {
     let page = page.unwrap_or(0);
     let per_page = per_page.unwrap_or(10).min(100); // Cap at 100 posts per page
     let offset = page * per_page;
 
-    let posts = sqlx::query_as!(
-        Post,
-        r#"
-        SELECT 
-            id, title, description, type, subject, 
-            price, deadline, urgent, status,
-            created_at, updated_at,
-            owner_id, owner_name, owner_username, owner_email, 
-            owner_avatar, owner_rating,
-            view_count, response_count,
-            location, preferred_contact_method, 
-            academic_level, difficulty
-        FROM posts
-        WHERE status = 'active'
-        ORDER BY urgent DESC, created_at DESC
-        LIMIT $1 OFFSET $2
-        "#,
-        per_page as i64,
-        offset as i64
-    )
+    let posts = if let Some(owner_id) = owner_id {
+        // Filter by owner_id
+        sqlx::query_as!(
+            Post,
+            r#"
+            SELECT 
+                id, title, description, type, subject, 
+                price, deadline, urgent, status,
+                created_at, updated_at,
+                owner_id, owner_name, owner_username, owner_email, 
+                owner_avatar, owner_rating,
+                view_count, response_count,
+                location, preferred_contact_method, 
+                academic_level, difficulty
+            FROM posts
+            WHERE status = 'active' AND owner_id = $1
+            ORDER BY urgent DESC, created_at DESC
+            LIMIT $2 OFFSET $3
+            "#,
+            owner_id,
+            per_page as i64,
+            offset as i64
+        )
         .fetch_all(db)
-        .await?;
+        .await?
+    } else {
+        // Get all posts
+        sqlx::query_as!(
+            Post,
+            r#"
+            SELECT 
+                id, title, description, type, subject, 
+                price, deadline, urgent, status,
+                created_at, updated_at,
+                owner_id, owner_name, owner_username, owner_email, 
+                owner_avatar, owner_rating,
+                view_count, response_count,
+                location, preferred_contact_method, 
+                academic_level, difficulty
+            FROM posts
+            WHERE status = 'active'
+            ORDER BY urgent DESC, created_at DESC
+            LIMIT $1 OFFSET $2
+            "#,
+            per_page as i64,
+            offset as i64
+        )
+        .fetch_all(db)
+        .await?
+    };
 
     Ok(posts)
 }
