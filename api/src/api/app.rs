@@ -67,8 +67,9 @@ pub fn init_router() -> Router<AppState> {
                     .allow_headers([
                         axum::http::header::CONTENT_TYPE,
                         axum::http::header::AUTHORIZATION,
+                        axum::http::header::HeaderName::from_static("x-requested-with"),
                     ])
-                    .allow_credentials(false)
+                    .allow_credentials(true)
             )
             .layer(TraceLayer::new_for_http());
 
