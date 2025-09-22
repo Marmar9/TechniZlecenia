@@ -132,7 +132,7 @@ export default function SignupPage() {
                 <Input
                   id={emailId}
                   type="email"
-                  placeholder="twoj.email@university.edu"
+                  placeholder="twoj.email@technischools.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="bg-input border-border"
