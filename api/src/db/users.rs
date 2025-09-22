@@ -170,15 +170,41 @@ pub async fn get_user_by_id_public(db: &PgPool, user_id: Uuid) -> Result<Option<
         Ok(Some(UserInfo {
             id: user.id.to_string(),
             username: user.username.clone(),
-            name: Some(user.username), // Use username as name for now
+            name: Some(user.username.clone()), // Use username as name
             email: user.email,
-            rating: Some(4.5), // Default rating for now
-            total_earnings: Some(0.0), // Default earnings
-            completed_jobs: Some(0), // Default completed jobs
-            join_date: Some(user.created_at.format("%B %Y").to_string()),
             subjects: Some(vec![]), // Default empty subjects
         }))
     } else {
         Ok(None)
     }
+}
+
+// Update user information
+pub async fn update_user(
+    db: &PgPool,
+    user_id: Uuid,
+    name: Option<String>,
+    subjects: Option<Vec<String>>,
+) -> Result<()> {
+    // For now, we'll store name in the username field since we don't have a separate name column
+    // and subjects as a JSON array in a subjects column (if it exists)
+    
+    if let Some(name) = name {
+        sqlx::query!(
+            r#"
+            UPDATE users SET username = $1 WHERE id = $2
+            "#,
+            name,
+            user_id
+        )
+        .execute(db)
+        .await?;
+    }
+
+    // Note: For subjects, we would need to add a subjects column to the database
+    // For now, we'll ignore subjects updates until the database schema is updated
+    // TODO: Add subjects column to users table and implement subjects update
+    let _ = subjects; // Suppress unused variable warning
+
+    Ok(())
 }

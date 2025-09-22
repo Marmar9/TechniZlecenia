@@ -6,7 +6,7 @@ use axum::{
     response::IntoResponse,
     Json,
 };
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 use crate::{
@@ -26,19 +26,18 @@ pub struct UserInfo {
     pub username: String,
     pub name: Option<String>,
     pub email: String,
-    pub rating: Option<f64>,
-    #[serde(rename = "totalEarnings")]
-    pub total_earnings: Option<f64>,
-    #[serde(rename = "completedJobs")]
-    pub completed_jobs: Option<i32>,
-    #[serde(rename = "joinDate")]
-    pub join_date: Option<String>,
     pub subjects: Option<Vec<String>>,
 }
 
 #[derive(Debug, Serialize)]
 pub struct ErrorResponse {
     pub message: String,
+}
+
+#[derive(Debug, Deserialize)]
+pub struct UpdateUserRequest {
+    pub name: Option<String>,
+    pub subjects: Option<Vec<String>>,
 }
 
 impl GetUserResponse {
@@ -105,6 +104,49 @@ pub async fn get_user_by_id(
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new("Failed to fetch user".to_string())),
+        )
+        .into_response(),
+    }
+}
+
+// PUT /users/{id} - Update user information
+pub async fn update_user(
+    State(app): State<AppState>,
+    token: AccessToken,
+    Path(user_id): Path<Uuid>,
+    Json(request): Json<UpdateUserRequest>,
+) -> impl IntoResponse {
+    let db = &app.db;
+
+    // Check if the user is trying to update their own profile
+    if token.sub != user_id {
+        return (
+            StatusCode::FORBIDDEN,
+            Json(ErrorResponse::new("You can only update your own profile".to_string())),
+        )
+        .into_response();
+    }
+
+    // Update user in database
+    if let Err(_) = db::users::update_user(db, user_id, request.name, request.subjects).await {
+        return (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("Failed to update user".to_string())),
+        )
+        .into_response();
+    }
+
+    // Fetch updated user information
+    match db::users::get_user_by_id_public(db, user_id).await {
+        Ok(Some(user)) => (StatusCode::OK, Json(GetUserResponse::new(user))).into_response(),
+        Ok(None) => (
+            StatusCode::NOT_FOUND,
+            Json(ErrorResponse::new("User not found".to_string())),
+        )
+        .into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("Failed to fetch updated user".to_string())),
         )
         .into_response(),
     }

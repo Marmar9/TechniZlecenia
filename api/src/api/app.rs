@@ -45,7 +45,8 @@ pub fn init_router() -> Router<AppState> {
             .nest(
                 "/users",
                 Router::new()
-                    .route("/{id}", get(user::get_user_by_id)),
+                    .route("/{id}", get(user::get_user_by_id))
+                    .route("/{id}", put(user::update_user)),
             )
             .route(
                 "/test",
