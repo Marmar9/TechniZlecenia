@@ -1,35 +1,34 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
-
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
-});
+import type React from "react"
+import type { Metadata } from "next"
+import { GeistSans } from "geist/font/sans"
+import { GeistMono } from "geist/font/mono"
+import { Analytics } from "@vercel/analytics/next"
+import { Suspense } from "react"
+import { AuthGuard } from "@/components/auth-guard"
+import { Toaster } from "@/components/ui/toaster"
+import "./globals.css"
 
 export const metadata: Metadata = {
-  title: "Techni kurier",
-  description:
-    "You order, they deliver. Wellcome to underground world of techni",
-};
+  title: "TechniZlecenia",
+  description: "Technizlecenia - od ucznia dla ucznia",
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   return (
-    <html lang="en">
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
-        {children}
+    <html lang="pl" className="dark">
+      <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
+        <AuthGuard>
+          <Suspense fallback={null}>{children}</Suspense>
+          <Toaster />
+        </AuthGuard>
+        <Analytics />
       </body>
     </html>
-  );
+  )
 }
+
+

@@ -1,0 +1,30 @@
+[package]
+name = "techni-zlecenia-api"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+uuid = { version = "1.17.0", features   = ["v4", "serde"]}
+axum = { version = "0.8.4", features=["tracing", "macros"]}
+tokio = { version = "1.47.1", features = ["full"] }
+tower = { version = "0.5.2"  }
+tower-http = { version = "0.6.6", features=["trace", "cors"] }
+tracing = { version = "0.1.41" }
+tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt"] }
+sqlx = { version = "0.8.6", features = ["postgres", "macros", "uuid", "runtime-tokio-native-tls", "chrono", "rust_decimal"] }
+log = { version = "0.4.27" }
+thiserror = { version = "2.0.16" }
+argon2 = { version = "0.5.3", features = ["rand"]}
+rand = { version = "0.9.2", features = ["os_rng"]}
+dotenv = { version = "0.15.0" }
+chrono = { version = "0.4.42", features = ["serde"] }
+serde = { version = "1.0.225", features = ["derive"] }
+serde_json = { version = "1.0.145" }
+jsonwebtoken = { version = "9.3.1" }
+async-trait = { version = "0.1.89" }
+axum-extra = { version = "0.10.1", features = [ "cookie", "cookie-signed", "cookie-private", "cookie-key-expansion"]}
+rust_decimal = { version = "1.35", features = ["serde-float"] }
+
+
+[dev-dependencies]
+sqlx-cli = {version = "0.8.6", features = ["postgres"]}

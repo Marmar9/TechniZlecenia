@@ -1,0 +1,1 @@
+drop table if exists msg_threads;
