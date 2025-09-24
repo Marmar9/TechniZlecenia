@@ -12,4 +12,6 @@ pub enum AppError {
     SqlxError(#[from] sqlx::error::Error),
     #[error(transparent)]
     CredentialError(#[from] CredentialError),
+    #[error("Migration Error: {0}")]
+    MigrationError(#[from] sqlx::migrate::MigrateError),
 }

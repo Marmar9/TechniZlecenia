@@ -1,1 +1,6 @@
 /target
+.sqlx/
+.env
+.env.prod
+.idea
+.vscode
