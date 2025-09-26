@@ -46,7 +46,6 @@
 **/*.pdb
 **/*.sln*
 **/*.vcxproj*
-**/package-lock.json
 /.cache
 /.webkit-cache
 /build-*/

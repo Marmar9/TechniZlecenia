@@ -1,15 +1,15 @@
-"use client"
+"use client";
 
-import { Header } from "@/components/header"
-import { PostsFeed } from "@/components/posts-feed"
-import { useState } from "react"
+import { useState } from "react";
+import { Header } from "@/components/header";
+import { PostsFeed } from "@/components/posts-feed";
 
 export default function HomePage() {
-  const [searchQuery, setSearchQuery] = useState("")
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearch = (query: string) => {
-    setSearchQuery(query)
-  }
+    setSearchQuery(query);
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -18,5 +18,5 @@ export default function HomePage() {
         <PostsFeed searchQuery={searchQuery} />
       </main>
     </div>
-  )
+  );
 }

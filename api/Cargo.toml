@@ -11,7 +11,7 @@ tower = { version = "0.5.2"  }
 tower-http = { version = "0.6.6", features=["trace", "cors"] }
 tracing = { version = "0.1.41" }
 tracing-subscriber = { version = "0.3.19", features = ["env-filter", "fmt"] }
-sqlx = { version = "0.8.6", features = ["postgres", "macros", "uuid", "runtime-tokio-native-tls", "chrono", "rust_decimal"] }
+sqlx = { version = "0.8.6", features = ["postgres", "macros", "uuid", "runtime-tokio-rustls", "chrono", "rust_decimal"] }
 log = { version = "0.4.27" }
 thiserror = { version = "2.0.16" }
 argon2 = { version = "0.5.3", features = ["rand"]}
