@@ -3,7 +3,7 @@
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Clock, DollarSign, AlertCircle, Edit, Trash2 } from "lucide-react"
+import { Clock, AlertCircle, Edit, Trash2 } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatRelativeTime, formatDeadline } from "@/lib/date-utils"
 import { useRouter } from "next/navigation"
@@ -38,12 +38,21 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
     }
   }
 
-  const currentUser: User =
-    typeof window !== "undefined"
-      ? JSON.parse(localStorage.getItem("currentUser") || '{"id": "", "email": "", "name": "You"}')
-      : { id: "", email: "", name: "Ty" }
+  const currentUser: User = (() => {
+    if (typeof window === "undefined") {
+      throw new Error("Cannot access localStorage on server side")
+    }
+    const userData = localStorage.getItem("currentUser")
+    if (!userData) {
+      throw new Error("No user data found in localStorage")
+    }
+    try {
+      return JSON.parse(userData)
+    } catch {
+      throw new Error("Invalid user data in localStorage")
+    }
+  })()
   
-  // Check if current user owns this post
   const isOwnPost = post.owner_id === currentUser.id
 
   const handleViewProfile = () => {
@@ -118,8 +127,8 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
 
       <CardFooter className="pt-0 flex items-center justify-between">
         <div className="flex items-center gap-1 text-lg font-semibold text-card-foreground">
-          <DollarSign className="h-4 w-4" />
           {post.price}
+          <span className="text-sm">zł</span>
         </div>
         <div className="flex items-center gap-2">
           {showEditOptions && isOwnPost && (

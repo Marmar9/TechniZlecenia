@@ -1,7 +1,7 @@
 "use client"
 
-import { Header } from "@/components/header"
-import { PostsFeed } from "@/components/posts-feed"
+import { Header } from "@/components/layout/header"
+import { PostsFeed } from "@/components/features/posts-feed"
 import { useState } from "react"
 
 export default function HomePage() {

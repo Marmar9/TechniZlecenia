@@ -4,7 +4,8 @@ import { GeistSans } from "geist/font/sans"
 import { GeistMono } from "geist/font/mono"
 import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
-import { AuthGuard } from "@/components/auth-guard"
+import { AuthProvider } from "@/contexts/auth-context"
+import { AuthGuard } from "@/components/layout/auth-guard"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
@@ -21,10 +22,12 @@ export default function RootLayout({
   return (
     <html lang="pl" className="dark">
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
-        <AuthGuard>
-          <Suspense fallback={null}>{children}</Suspense>
-          <Toaster />
-        </AuthGuard>
+        <AuthProvider>
+          <AuthGuard>
+            <Suspense fallback={null}>{children}</Suspense>
+            <Toaster />
+          </AuthGuard>
+        </AuthProvider>
         <Analytics />
       </body>
     </html>

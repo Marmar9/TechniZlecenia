@@ -1,7 +1,7 @@
 "use client"
 
-import { PostCard } from "@/components/post-card"
-import { CreatePostModal } from "@/components/create-post-modal"
+import { PostCard } from "@/components/features/post-card"
+import { CreatePostModal } from "@/components/features/create-post-modal"
 import { useState, useMemo, useEffect } from "react"
 import { postsAPI } from "@/lib/api"
 import { useToast } from "@/hooks/use-toast"
@@ -19,7 +19,6 @@ export function PostsFeed({ searchQuery = "" }: PostsFeedProps) {
   const [isLoading, setIsLoading] = useState(true)
   const { toast } = useToast()
 
-  // Fetch posts from API
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -33,7 +32,7 @@ export function PostsFeed({ searchQuery = "" }: PostsFeedProps) {
           description: errorMessage,
           variant: "destructive",
         })
-        setPosts([]) // Show empty state instead of mock data
+        setPosts([])
       } finally {
         setIsLoading(false)
       }
@@ -68,7 +67,6 @@ export function PostsFeed({ searchQuery = "" }: PostsFeedProps) {
     console.log('handlePostCreated called with:', newPost)
     setEditingPost(null)
     
-    // Force refresh by fetching latest posts from API
     try {
       console.log('Refreshing posts from API...')
       const data = await postsAPI.getAllPostsLegacy()
@@ -76,19 +74,7 @@ export function PostsFeed({ searchQuery = "" }: PostsFeedProps) {
       setPosts(data || [])
     } catch (error) {
       console.error('Failed to refresh posts:', error)
-      // Fallback: add the post locally if API fails
-      setPosts((prevPosts) => {
-        const existingIndex = prevPosts.findIndex((p) => p.id === newPost.id)
-        if (existingIndex >= 0) {
-          // Update existing post
-          const updated = [...prevPosts]
-          updated[existingIndex] = newPost
-          return updated
-        } else {
-          // Add new post
-          return [newPost, ...prevPosts]
-        }
-      })
+      throw error
     }
   }
 
@@ -102,13 +88,13 @@ export function PostsFeed({ searchQuery = "" }: PostsFeedProps) {
         description: "Twoje ogłoszenie zostało usunięte z rynku.",
       })
       
-      // Force refresh by fetching latest posts from API
       const refreshPosts = async () => {
         try {
           const data = await postsAPI.getAllPostsLegacy()
           setPosts(data || [])
         } catch (error) {
           console.error('Failed to refresh posts:', error)
+          throw error
         }
       }
       refreshPosts()

@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { useToast } from "@/hooks/use-toast"
+import { useAuth } from "@/contexts/auth-context"
 import { authAPI } from "@/lib/api"
 import { Eye, EyeOff, LogIn } from "lucide-react"
 
@@ -17,6 +18,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const { toast } = useToast()
+  const { login: loginUser } = useAuth()
   const router = useRouter()
   const emailId = useId()
   const passwordId = useId()
@@ -39,9 +41,7 @@ export default function LoginPage() {
     try {
       const response = await authAPI.login(email, password)
       
-      // Store auth token and user data
-      localStorage.setItem('auth_token', response.access_token || response.token || '')
-      localStorage.setItem('currentUser', JSON.stringify(response.user))
+      loginUser(response.user, response.access_token || response.token || '')
       
       toast({
         title: "Witaj z powrotem!",
