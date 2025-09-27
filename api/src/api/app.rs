@@ -4,6 +4,7 @@ use crate::{
     api::{
         auth::{login, refresh, register},
         post,
+        review,
         user,
     },
     server::auth::AccessToken,
@@ -45,8 +46,17 @@ pub fn init_router() -> Router<AppState> {
             .nest(
                 "/users",
                 Router::new()
+                    .route("/", get(user::get_all_users))
                     .route("/{id}", get(user::get_user_by_id))
                     .route("/{id}", put(user::update_user)),
+            )
+            .nest(
+                "/reviews",
+                Router::new()
+                    .route("/", get(review::get_reviews))
+                    .route("/", post_method(review::create_review))
+                    .route("/stats/{id}", get(review::get_review_stats))
+                    .route("/{id}", delete(review::delete_review)),
             )
             .route(
                 "/test",

@@ -208,3 +208,37 @@ pub async fn update_user(
 
     Ok(())
 }
+
+// Get all users (public information only)
+pub async fn get_all_users_public(db: &PgPool) -> Result<Vec<crate::api::user::UserInfo>> {
+    struct UserQuery {
+        id: Uuid,
+        username: String,
+        email: String,
+        created_at: DateTime<Utc>,
+    }
+
+    let users = sqlx::query_as!(
+        UserQuery,
+        r#"
+        SELECT id, username, email, created_at
+        FROM users
+        ORDER BY created_at DESC
+        "#
+    )
+    .fetch_all(db)
+    .await?;
+
+    let user_infos = users
+        .into_iter()
+        .map(|user| crate::api::user::UserInfo {
+            id: user.id.to_string(),
+            username: user.username.clone(),
+            name: Some(user.username.clone()), // Use username as name
+            email: user.email,
+            subjects: Some(vec![]), // Default empty subjects
+        })
+        .collect();
+
+    Ok(user_infos)
+}

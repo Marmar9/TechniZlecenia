@@ -216,7 +216,7 @@ pub async fn get_posts(
         None
     };
 
-    match db::posts::get_posts_filtered(db, query.page, query.per_page, owner_uuid).await {
+    match db::posts::get_posts_filtered(db, query.page.unwrap_or(0), query.per_page.unwrap_or(10), owner_uuid).await {
         Ok(posts) => (StatusCode::OK, Json(GetPostsResponse::new(posts))).into_response(),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,

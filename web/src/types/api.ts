@@ -75,3 +75,39 @@ export interface CreatePostModalProps {
   onPostCreated?: (post: Post) => void
   editingPost?: Post
 }
+
+export interface Review {
+  id: string
+  review_sender_id: string
+  review_receiver_id: string
+  score: number
+  comment?: string
+  review_type: 'post' | 'profile'
+  post_id?: string
+  profile_id?: string
+  created_at: string
+  updated_at: string
+  sender_name?: string
+  sender_username?: string
+}
+
+export interface CreateReviewRequest {
+  review_receiver_id: string
+  score: number
+  comment?: string
+  review_type: 'post' | 'profile'
+  post_id?: string
+  profile_id?: string
+}
+
+export interface ReviewStats {
+  total_reviews: number
+  average_score: number
+  rating_breakdown: {
+    five_stars: number
+    four_stars: number
+    three_stars: number
+    two_stars: number
+    one_star: number
+  }
+}

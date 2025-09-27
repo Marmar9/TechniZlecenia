@@ -15,7 +15,7 @@ use axum::{
 };
 use jsonwebtoken::{DecodingKey, Validation};
 use serde::{Deserialize, Serialize, de::DeserializeOwned};
-use sqlx::{PgPool, Pool, Postgres, Type, postgres::PgTypeInfo};
+use sqlx::{PgPool, Postgres, Type, postgres::PgTypeInfo};
 use std::{ops::Deref, sync::LazyLock};
 use uuid::Uuid;
 

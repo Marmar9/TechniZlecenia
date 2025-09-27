@@ -17,7 +17,7 @@ services:
     networks:
       - internal
     ports:
-      - "127.0.0.1:5432:5432"
+      - "5432:5432"
 
   web:
     build:
@@ -44,3 +44,7 @@ services:
       REFRESH_TOKEN_SECRET: ${REFRESH_TOKEN_SECRET}
 volumes:
   db_data:
+
+networks:
+  internal:
+    driver: bridge

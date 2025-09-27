@@ -2,6 +2,7 @@
 
 import { Header } from "@/components/layout/header"
 import { PostsFeed } from "@/components/features/posts-feed"
+import { MatchingSuggestions } from "@/components/features/matching-suggestions"
 import { useState } from "react"
 
 export default function HomePage() {
@@ -14,8 +15,15 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       <Header onSearch={handleSearch} />
-      <main className="h-[calc(100vh-4rem)]">
-        <PostsFeed searchQuery={searchQuery} />
+      <main className="container mx-auto px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          <div className="lg:col-span-3">
+            <PostsFeed searchQuery={searchQuery} />
+          </div>
+          <div className="lg:col-span-1">
+            <MatchingSuggestions />
+          </div>
+        </div>
       </main>
     </div>
   )

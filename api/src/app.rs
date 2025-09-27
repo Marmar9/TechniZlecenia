@@ -1,6 +1,5 @@
 use crate::common::env;
 use crate::error::Result;
-use axum::response::IntoResponse;
 use sqlx::migrate::Migrator;
 use sqlx::PgPool;
 

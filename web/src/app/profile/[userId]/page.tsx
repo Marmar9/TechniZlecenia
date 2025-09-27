@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { PostCard } from "@/components/features/post-card"
 import { CreatePostModal } from "@/components/features/create-post-modal"
+import { ReviewsList } from "@/components/features/reviews-list"
 import { BookOpen, Mail, ArrowLeft, ChevronLeft, ChevronRight, Plus, LogOut, Search } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
@@ -310,6 +311,23 @@ export default function UserProfilePage() {
                 )}
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-foreground">
+              Recenzje profilu
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ReviewsList
+              targetId={userId}
+              reviewType="profile"
+              targetName={user.name || user.username || 'Użytkownik'}
+              canAddReview={!isOwnProfile}
+              showStats={true}
+            />
           </CardContent>
         </Card>
 

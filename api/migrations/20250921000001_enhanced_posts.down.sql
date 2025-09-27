@@ -46,3 +46,9 @@ DROP COLUMN IF EXISTS location,
 DROP COLUMN IF EXISTS preferred_contact_method,
 DROP COLUMN IF EXISTS academic_level,
 DROP COLUMN IF EXISTS difficulty;
+
+
+
+
+
+

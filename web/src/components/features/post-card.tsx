@@ -1,12 +1,14 @@
 "use client"
 
+import { useState } from "react"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
-import { Clock, AlertCircle, Edit, Trash2 } from "lucide-react"
+import { Clock, AlertCircle, Edit, Trash2, Star, ChevronDown, ChevronUp } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { formatRelativeTime, formatDeadline } from "@/lib/date-utils"
 import { useRouter } from "next/navigation"
+import { ReviewsList } from "./reviews-list"
 import type { Post, User } from "@/types/api"
 
 interface PostCardProps {
@@ -19,6 +21,7 @@ interface PostCardProps {
 export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: PostCardProps) {
   const { toast } = useToast()
   const router = useRouter()
+  const [showReviews, setShowReviews] = useState(false)
 
   const handleEdit = () => {
     if (onEdit) {
@@ -131,6 +134,16 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
           <span className="text-sm">zł</span>
         </div>
         <div className="flex items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowReviews(!showReviews)}
+            className="flex items-center gap-1"
+          >
+            <Star className="h-4 w-4" />
+            Recenzje
+            {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+          </Button>
           {showEditOptions && isOwnPost && (
             <>
               <Button variant="outline" size="sm" onClick={handleEdit}>
@@ -150,6 +163,18 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
           )}
         </div>
       </CardFooter>
+
+      {showReviews && (
+        <CardContent className="pt-0 border-t border-border">
+          <ReviewsList
+            targetId={post.id}
+            reviewType="post"
+            targetName={post.title}
+            canAddReview={!isOwnPost}
+            showStats={true}
+          />
+        </CardContent>
+      )}
     </Card>
   )
 }

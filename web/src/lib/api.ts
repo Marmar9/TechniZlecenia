@@ -1,5 +1,5 @@
 import axios from 'axios'
-import type { AuthResponse, Post, PostData, User } from '@/types/api'
+import type { AuthResponse, Post, PostData, User, Review, CreateReviewRequest, ReviewStats } from '@/types/api'
 
 const API_BASE_URL = 'https://api.oxylize.com'
 
@@ -89,6 +89,15 @@ export const userAPI = {
       return response.data.user || response.data
     } catch (error) {
       console.error('Failed to get user:', error)
+      throw error
+    }
+  },
+  getAllUsers: async (): Promise<User[]> => {
+    try {
+      const response = await api.get('/users')
+      return response.data.users || response.data || []
+    } catch (error) {
+      console.error('Failed to get users:', error)
       throw error
     }
   },
@@ -198,6 +207,55 @@ api.interceptors.request.use((config) => {
   }
   return config
 })
+
+export const reviewsAPI = {
+  createReview: async (reviewData: CreateReviewRequest): Promise<Review> => {
+    try {
+      const response = await api.post('/reviews', reviewData)
+      return response.data
+    } catch (error) {
+      console.error('Failed to create review:', error)
+      throw error
+    }
+  },
+
+  getReviews: async (params?: {
+    review_type?: 'post' | 'profile'
+    post_id?: string
+    profile_id?: string
+    page?: number
+    limit?: number
+  }): Promise<Review[]> => {
+    try {
+      const response = await api.get('/reviews', { params })
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch reviews:', error)
+      throw error
+    }
+  },
+
+  deleteReview: async (reviewId: string): Promise<void> => {
+    try {
+      await api.delete(`/reviews/${reviewId}`)
+    } catch (error) {
+      console.error('Failed to delete review:', error)
+      throw error
+    }
+  },
+
+  getReviewStats: async (targetId: string, reviewType: 'post' | 'profile' = 'profile'): Promise<ReviewStats> => {
+    try {
+      const response = await api.get(`/reviews/stats/${targetId}`, {
+        params: { review_type: reviewType }
+      })
+      return response.data
+    } catch (error) {
+      console.error('Failed to fetch review stats:', error)
+      throw error
+    }
+  }
+}
 
 api.interceptors.response.use(
   (response) => response,

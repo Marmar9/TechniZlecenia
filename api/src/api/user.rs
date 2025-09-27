@@ -21,6 +21,11 @@ pub struct GetUserResponse {
 }
 
 #[derive(Debug, Serialize)]
+pub struct GetUsersResponse {
+    pub users: Vec<UserInfo>,
+}
+
+#[derive(Debug, Serialize)]
 pub struct UserInfo {
     pub id: String,
     pub username: String,
@@ -43,6 +48,12 @@ pub struct UpdateUserRequest {
 impl GetUserResponse {
     pub fn new(user: UserInfo) -> Self {
         Self { user }
+    }
+}
+
+impl GetUsersResponse {
+    pub fn new(users: Vec<UserInfo>) -> Self {
+        Self { users }
     }
 }
 
@@ -147,6 +158,22 @@ pub async fn update_user(
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             Json(ErrorResponse::new("Failed to fetch updated user".to_string())),
+        )
+        .into_response(),
+    }
+}
+
+// GET /users - Get all users (public information only)
+pub async fn get_all_users(
+    State(app): State<AppState>,
+) -> impl IntoResponse {
+    let db = &app.db;
+
+    match db::users::get_all_users_public(db).await {
+        Ok(users) => (StatusCode::OK, Json(GetUsersResponse::new(users))).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            Json(ErrorResponse::new("Failed to fetch users".to_string())),
         )
         .into_response(),
     }

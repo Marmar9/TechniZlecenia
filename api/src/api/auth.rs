@@ -16,7 +16,7 @@ use crate::{
 const REFRESH_COOKIE_IDENT: &str = "refresh_token";
 
 fn build_refresh_cookie(token: String) -> Cookie<'static> {
-    let mut cookie = Cookie::build((REFRESH_COOKIE_IDENT, token))
+    let cookie = Cookie::build((REFRESH_COOKIE_IDENT, token))
         .http_only(true)
         .same_site(SameSite::Strict)
         .path("/auth/refresh");
