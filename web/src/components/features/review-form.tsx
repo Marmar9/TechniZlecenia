@@ -13,6 +13,7 @@ interface ReviewFormProps {
   reviewType: 'post' | 'profile'
   targetId: string
   targetName: string
+  receiverId?: string // User ID of the person being reviewed
   onReviewCreated?: () => void
   onCancel?: () => void
   className?: string
@@ -22,6 +23,7 @@ export function ReviewForm({
   reviewType,
   targetId,
   targetName,
+  receiverId,
   onReviewCreated,
   onCancel,
   className
@@ -46,7 +48,7 @@ export function ReviewForm({
     setIsSubmitting(true)
     try {
       const reviewData: CreateReviewRequest = {
-        review_receiver_id: targetId,
+        review_receiver_id: receiverId || targetId, // Use receiverId if provided, otherwise fallback to targetId
         score: rating,
         comment: comment.trim() || undefined,
         review_type: reviewType,

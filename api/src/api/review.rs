@@ -79,6 +79,32 @@ pub async fn create_review(
         }
     }
 
+    // Check if the sender user exists
+    let sender_exists = sqlx::query!(
+        "SELECT id FROM users WHERE id = $1",
+        user_id
+    )
+    .fetch_optional(&app_state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if sender_exists.is_none() {
+        return Err((StatusCode::UNAUTHORIZED, "User not found".to_string()));
+    }
+
+    // Check if the receiver user exists
+    let receiver_exists = sqlx::query!(
+        "SELECT id FROM users WHERE id = $1",
+        payload.review_receiver_id
+    )
+    .fetch_optional(&app_state.db)
+    .await
+    .map_err(|e| (StatusCode::INTERNAL_SERVER_ERROR, e.to_string()))?;
+
+    if receiver_exists.is_none() {
+        return Err((StatusCode::BAD_REQUEST, "Review receiver not found".to_string()));
+    }
+
     // Prevent self-reviews
     if user_id == payload.review_receiver_id {
         return Err((StatusCode::BAD_REQUEST, "Cannot review yourself".to_string()));
