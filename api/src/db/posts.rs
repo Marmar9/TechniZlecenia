@@ -152,9 +152,10 @@ pub async fn create_post(
         r#"
         INSERT INTO posts (
             id, title, description, type, subject, price, deadline, urgent, 
-            owner_id, location, preferred_contact_method, academic_level, difficulty
+            owner_id, owner_name, owner_username, owner_email, owner_avatar,
+            location, preferred_contact_method, academic_level, difficulty
         )
-        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15, $16, $17)
         RETURNING id, title, description, type, subject, price, deadline, urgent, 
                   status, created_at, updated_at, owner_id, view_count, response_count,
                   location, preferred_contact_method, academic_level, difficulty
@@ -168,6 +169,10 @@ pub async fn create_post(
         deadline,
         urgent,
         owner_id,
+        owner_info.username, // owner_name
+        owner_info.username, // owner_username
+        owner_info.email,    // owner_email
+        owner_info.avatar,   // owner_avatar
         location,
         preferred_contact_method,
         academic_level,
