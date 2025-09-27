@@ -86,7 +86,7 @@ pub async fn create_review(
 
     // Check if review already exists using a single query
     let existing_review = sqlx::query!(
-        "SELECT id FROM reviews WHERE review_sender_id = $1 AND review_receiver_id = $2 AND ($3::text = 'post' AND post_id = $4) OR ($3::text = 'profile' AND profile_id = $5)",
+        "SELECT id FROM reviews WHERE review_sender_id = $1 AND review_receiver_id = $2 AND (($3::text = 'post' AND post_id = $4) OR ($3::text = 'profile' AND profile_id = $5))",
         user_id,
         payload.review_receiver_id,
         payload.review_type,
@@ -263,7 +263,7 @@ pub async fn get_review_stats(
             COUNT(CASE WHEN score = 2 THEN 1 END) as two_stars,
             COUNT(CASE WHEN score = 1 THEN 1 END) as one_star
         FROM reviews 
-        WHERE ($1::text = 'post' AND post_id = $2) OR ($1::text = 'profile' AND profile_id = $2)
+        WHERE (($1::text = 'post' AND post_id = $2) OR ($1::text = 'profile' AND profile_id = $2))
         "#,
         review_type,
         target_id
