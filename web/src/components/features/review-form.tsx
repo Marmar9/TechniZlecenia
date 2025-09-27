@@ -47,8 +47,14 @@ export function ReviewForm({
 
     setIsSubmitting(true)
     try {
+      // For post reviews, receiverId must be provided (the post owner's user ID)
+      // For profile reviews, receiverId can be the same as targetId
+      if (reviewType === 'post' && !receiverId) {
+        throw new Error('receiverId is required for post reviews')
+      }
+
       const reviewData: CreateReviewRequest = {
-        review_receiver_id: receiverId || targetId, // Use receiverId if provided, otherwise fallback to targetId
+        review_receiver_id: receiverId || targetId,
         score: rating,
         comment: comment.trim() || undefined,
         review_type: reviewType,

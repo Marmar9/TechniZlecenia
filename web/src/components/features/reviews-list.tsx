@@ -14,7 +14,7 @@ interface ReviewsListProps {
   targetId: string
   reviewType: 'post' | 'profile'
   targetName: string
-  receiverId?: string // User ID of the person being reviewed
+  receiverId?: string // User ID of the person being reviewed (required for post reviews)
   canAddReview?: boolean
   showStats?: boolean
   className?: string
