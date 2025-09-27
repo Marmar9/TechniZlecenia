@@ -12,20 +12,31 @@
 //
 
 use crate::server::auth::AccessToken;
+use crate::error::AppError;
 use axum::extract::{ws::{Message, WebSocket}, WebSocketUpgrade};
 use futures::StreamExt;
+use serde::{Deserialize, Serialize};
 
-async fn sync_handler(ws: WebSocketUpgrade, token: AccessToken) {}
+#[derive(Debug, Serialize, Deserialize)]
+pub struct SyncPacket {
+    pub message: String,
+}
+
+async fn sync_handler(_ws: WebSocketUpgrade, _token: AccessToken) {}
 
 async fn socket_handler(mut socket: WebSocket) {
-    let (mut sender, mut receiver) = socket.split();
+    let (mut _sender, mut receiver) = socket.split();
 
-    receiver.filter_map(|res| {
-        res.ok().map(|msg| {
+    while let Some(msg) = receiver.next().await {
+        if let Ok(msg) = msg {
             match msg {
-                Message::Text(payload) => serde_json::from_slice::<SyncPacket>(payload).map_err(|| ),
-                _ => Err(AppError::SyncError())
+                Message::Text(payload) => {
+                    if let Ok(sync_packet) = serde_json::from_str::<SyncPacket>(&payload) {
+                        println!("Received sync packet: {:?}", sync_packet);
+                    }
+                },
+                _ => {}
             }
-        })
-    })
+        }
+    }
 }
