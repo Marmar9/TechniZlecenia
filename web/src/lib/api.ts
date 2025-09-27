@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { AuthResponse, Post, PostData, User, Review, CreateReviewRequest, ReviewStats } from '@/types/api'
 
-const API_BASE_URL = 'https://api.oxylize.com'
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.oxylize.com'
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
