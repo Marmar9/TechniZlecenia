@@ -41,25 +41,22 @@ export function ReviewStatsComponent({ stats, className }: ReviewStatsProps) {
 
       <div className="space-y-2">
         {[5, 4, 3, 2, 1].map((stars) => {
-          const count = rating_breakdown[`${stars === 5 ? 'five' : stars === 4 ? 'four' : stars === 3 ? 'three' : stars === 2 ? 'two' : 'one'}_stars` as keyof typeof rating_breakdown] as number
+          const count = rating_breakdown[`${stars === 5 ? 'five' : stars === 4 ? 'four' : stars === 3 ? 'three' : stars === 2 ? 'two' : 'one'}_stars` as keyof typeof rating_breakdown] as number || 0
           const percentage = getPercentage(count)
           
-          // Debug logging
-          console.log(`Stars: ${stars}, Count: ${count}, Percentage: ${percentage}%`)
-          
           return (
-            <div key={stars} className="flex items-center space-x-2">
-              <div className="flex items-center space-x-1 w-16">
-                <span className="text-sm font-medium">{stars}</span>
+            <div key={stars} className="flex items-center space-x-3">
+              <div className="flex items-center space-x-1 w-20 flex-shrink-0">
+                <span className="text-sm font-medium w-4">{stars}</span>
                 <StarRating rating={stars} size="sm" />
               </div>
-              <div className="flex-1 bg-muted rounded-full h-2">
+              <div className="flex-1 bg-muted rounded-full h-2 mx-2">
                 <div
                   className="bg-yellow-400 h-2 rounded-full transition-all duration-300"
                   style={{ width: `${Math.max(percentage, 0)}%` }}
                 />
               </div>
-              <div className="text-sm text-muted-foreground w-12 text-right">
+              <div className="text-sm text-muted-foreground w-8 text-right flex-shrink-0">
                 {count}
               </div>
             </div>
