@@ -9,11 +9,13 @@ CREATE TABLE messages (
     CONSTRAINT messages_content_not_empty CHECK (trim(content) <> '')
 );
 
+-- Create indexes for better performance
 CREATE INDEX idx_messages_thread_id ON messages(thread_id);
 CREATE INDEX idx_messages_sender_id ON messages(sender_id);
 CREATE INDEX idx_messages_sent_at ON messages(sent_at);
 CREATE INDEX idx_messages_thread_sent ON messages(thread_id, sent_at DESC);
 
+-- Create function to notify about new messages
 CREATE OR REPLACE FUNCTION notify_new_message()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -32,10 +34,12 @@ BEGIN
     SET updated_at = NEW.sent_at
     WHERE id = NEW.thread_id;
 
+
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create trigger to notify about new messages
 CREATE TRIGGER message_notify_trigger
     AFTER INSERT ON messages
     FOR EACH ROW

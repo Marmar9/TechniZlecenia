@@ -13,6 +13,7 @@ interface ReviewFormProps {
   reviewType: 'post' | 'profile'
   targetId: string
   targetName: string
+  receiverId?: string // User ID of the person being reviewed
   onReviewCreated?: () => void
   onCancel?: () => void
   className?: string
@@ -22,6 +23,7 @@ export function ReviewForm({
   reviewType,
   targetId,
   targetName,
+  receiverId,
   onReviewCreated,
   onCancel,
   className
@@ -45,8 +47,14 @@ export function ReviewForm({
 
     setIsSubmitting(true)
     try {
+      // For post reviews, receiverId must be provided (the post owner's user ID)
+      // For profile reviews, receiverId can be the same as targetId
+      if (reviewType === 'post' && !receiverId) {
+        throw new Error('receiverId is required for post reviews')
+      }
+
       const reviewData: CreateReviewRequest = {
-        review_receiver_id: targetId,
+        review_receiver_id: receiverId || targetId,
         score: rating,
         comment: comment.trim() || undefined,
         review_type: reviewType,

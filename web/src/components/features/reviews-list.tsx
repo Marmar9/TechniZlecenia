@@ -14,6 +14,7 @@ interface ReviewsListProps {
   targetId: string
   reviewType: 'post' | 'profile'
   targetName: string
+  receiverId?: string // User ID of the person being reviewed (required for post reviews)
   canAddReview?: boolean
   showStats?: boolean
   className?: string
@@ -23,6 +24,7 @@ export function ReviewsList({
   targetId,
   reviewType,
   targetName,
+  receiverId,
   canAddReview = true,
   showStats = true,
   className
@@ -119,6 +121,7 @@ export function ReviewsList({
             reviewType={reviewType}
             targetId={targetId}
             targetName={targetName}
+            receiverId={receiverId}
             onReviewCreated={handleReviewCreated}
             onCancel={() => setShowReviewForm(false)}
           />

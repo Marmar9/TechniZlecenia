@@ -167,6 +167,7 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
             targetId={post.id}
             reviewType="post"
             targetName={post.title}
+            receiverId={post.owner_id}
             canAddReview={!isOwnPost}
             showStats={true}
           />

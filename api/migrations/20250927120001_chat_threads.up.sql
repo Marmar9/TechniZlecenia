@@ -11,11 +11,13 @@ CREATE TABLE msg_threads (
     CONSTRAINT unique_thread_per_post UNIQUE (post_id, user_a, user_b)
 );
 
+-- Create indexes for better performance
 CREATE INDEX idx_msg_threads_post_id ON msg_threads(post_id);
 CREATE INDEX idx_msg_threads_user_a ON msg_threads(user_a);
 CREATE INDEX idx_msg_threads_user_b ON msg_threads(user_b);
 CREATE INDEX idx_msg_threads_created_at ON msg_threads(created_at);
 
+-- Create function to update updated_at timestamp
 CREATE OR REPLACE FUNCTION update_msg_threads_updated_at()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -24,6 +26,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
+-- Create trigger to automatically update updated_at
 CREATE TRIGGER msg_threads_updated_at_trigger
     BEFORE UPDATE ON msg_threads
     FOR EACH ROW
