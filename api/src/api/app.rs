@@ -3,6 +3,7 @@
 use crate::{
     api::{
         auth::{login, refresh, register},
+        chat,
         post,
         review,
         user,
@@ -57,6 +58,11 @@ pub fn init_router() -> Router<AppState> {
                     .route("/", post_method(review::create_review))
                     .route("/stats/{id}", get(review::get_review_stats))
                     .route("/{id}", delete(review::delete_review)),
+            )
+            .nest(
+                "/chat",
+                Router::new()
+                    .route("/ws", get(chat::websocket_handler)),
             )
             .route(
                 "/test",

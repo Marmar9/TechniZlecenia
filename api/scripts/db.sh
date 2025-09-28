@@ -7,10 +7,10 @@ if [ "$(docker ps -aq -f name=^tz-db$)" ]; then
 else
   echo "Creating new container tz-db..."
   docker run -d --name tz-db \
-    -e POSTGRES_PASSWORD=postgres \
-    -e POSTGRES_USER=postgres \
-    -e POSTGRES_DB=tz \
+    -e POSTGRES_PASSWORD=dev \
+    -e POSTGRES_USER=dev \
+    -e POSTGRES_DB=techni-zlecenia \
     -p 5432:5432 postgres:16
 fi
 
-echo "DB RUNNING ON: postgres://postgres:postgres@localhost:5432/tz"
+echo "DB RUNNING ON: postgres://dev:dev@localhost:5432/techni-zlecenia"

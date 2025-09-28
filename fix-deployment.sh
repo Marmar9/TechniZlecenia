@@ -5,7 +5,8 @@ echo "🔧 Fixing deployment issues..."
 
 # Install dependencies locally with correct React version
 echo "📦 Installing correct React version locally..."
-cd /home/eduard/Pulpit/TechniZlecenia/web
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/web"
 npm install --legacy-peer-deps
 
 # Rebuild the application
@@ -19,7 +20,7 @@ fi
 
 # Copy ecosystem config to remote server
 echo "📤 Copying ecosystem config..."
-scp /home/eduard/Pulpit/TechniZlecenia/ecosystem.config.js root@206.189.52.131:/var/www/myapp/
+scp "$SCRIPT_DIR/ecosystem.config.js" root@206.189.52.131:/var/www/myapp/
 
 # Install dependencies on remote server with legacy peer deps
 echo "📦 Installing dependencies on remote server..."

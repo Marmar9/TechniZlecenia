@@ -2,7 +2,7 @@
 
 import type React from "react"
 
-import { Search, Plus } from "lucide-react"
+import { Search, Plus, MessageCircle } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { UserProfile } from "@/components/features/user-profile"
@@ -45,6 +45,12 @@ export function Header({ onSearch }: HeaderProps) {
         </div>
 
         <div className="flex items-center gap-3">
+          <Link href="/chat">
+            <Button variant="outline" size="sm">
+              <MessageCircle className="h-4 w-4 mr-2" />
+              Wiadomości
+            </Button>
+          </Link>
           <Button
             className="bg-primary hover:bg-primary/90 text-primary-foreground"
             onClick={() => setIsCreateModalOpen(true)}

@@ -9,6 +9,8 @@ import { useToast } from "@/hooks/use-toast"
 import { formatRelativeTime, formatDeadline } from "@/lib/date-utils"
 import { useRouter } from "next/navigation"
 import { ReviewsList } from "./reviews-list"
+import { ContactPostOwner } from "./contact-post-owner"
+import { useAuth } from "@/contexts/auth-context"
 import type { Post, User } from "@/types/api"
 
 interface PostCardProps {
@@ -21,6 +23,7 @@ interface PostCardProps {
 export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: PostCardProps) {
   const { toast } = useToast()
   const router = useRouter()
+  const { user, token } = useAuth()
   const [showReviews, setShowReviews] = useState(false)
 
   const handleEdit = () => {
@@ -41,22 +44,7 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
     }
   }
 
-  const currentUser: User = (() => {
-    if (typeof window === "undefined") {
-      throw new Error("Cannot access localStorage on server side")
-    }
-    const userData = localStorage.getItem("currentUser")
-    if (!userData) {
-      throw new Error("No user data found in localStorage")
-    }
-    try {
-      return JSON.parse(userData)
-    } catch {
-      throw new Error("Invalid user data in localStorage")
-    }
-  })()
-  
-  const isOwnPost = post.owner_id === currentUser.id
+  const isOwnPost = post.owner_id === user?.id
 
   const handleViewProfile = () => {
     router.push(`/profile/${post.owner_id}`)
@@ -133,7 +121,7 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
           {post.price}
           <span className="text-sm">zł</span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Button
             variant="ghost"
             size="sm"
@@ -144,6 +132,15 @@ export function PostCard({ post, showEditOptions = false, onEdit, onDelete }: Po
             Recenzje
             {showReviews ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
           </Button>
+          
+          {!isOwnPost && (
+            <ContactPostOwner
+              post={post}
+              currentUserId={user?.id}
+              token={token}
+            />
+          )}
+          
           {showEditOptions && isOwnPost && (
             <>
               <Button variant="outline" size="sm" onClick={handleEdit}>

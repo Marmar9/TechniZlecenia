@@ -3,11 +3,37 @@
 # Deploy script for TechniZlecenia Rust API
 # Usage: ./deploy-api.sh
 
+set -e  # Exit on any error
+
 echo "🚀 Starting API deployment..."
+
+# Check prerequisites
+if ! command -v cargo >/dev/null 2>&1; then
+    echo "❌ Rust/Cargo not found. Please install Rust: https://rustup.rs/"
+    exit 1
+fi
+
+if ! command -v ssh >/dev/null 2>&1; then
+    echo "❌ SSH client not found. Please install openssh-client."
+    exit 1
+fi
+
+if ! command -v scp >/dev/null 2>&1; then
+    echo "❌ SCP not found. Please install openssh-client."
+    exit 1
+fi
+
+# Test SSH connection
+echo "🔐 Testing SSH connection..."
+if ! ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no root@206.189.52.131 "echo 'SSH connection successful'" >/dev/null 2>&1; then
+    echo "❌ Cannot connect to remote server. Please check SSH keys and connection."
+    exit 1
+fi
 
 # Build the Rust API
 echo "📦 Building Rust API..."
-cd /home/eduard/Pulpit/TechniZlecenia/api
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/api"
 cargo build --release
 
 if [ $? -ne 0 ]; then
@@ -49,7 +75,7 @@ ExecStart=/var/www/api/techni-zlecenia-api
 Restart=always
 RestartSec=5
 Environment=RUST_LOG=info
-Environment=DATABASE_URL=postgresql://username:password@localhost/techni_zlecenia
+Environment=DATABASE_URL=postgresql://dev:dev@localhost:5432/techni-zlecenia
 
 [Install]
 WantedBy=multi-user.target

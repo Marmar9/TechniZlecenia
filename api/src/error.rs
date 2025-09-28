@@ -14,4 +14,12 @@ pub enum AppError {
     CredentialError(#[from] CredentialError),
     #[error("Migration Error: {0}")]
     MigrationError(#[from] sqlx::migrate::MigrateError),
+    #[error("JSON parsing error: {0}")]
+    JsonError(#[from] serde_json::Error),
+    #[error("UUID parsing error: {0}")]
+    UuidError(#[from] uuid::Error),
+    #[error("Bad request: {0}")]
+    BadRequest(String),
+    #[error("Internal server error: {0}")]
+    InternalServerError(String),
 }

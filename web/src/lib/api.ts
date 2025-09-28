@@ -1,7 +1,8 @@
 import axios from 'axios'
 import type { AuthResponse, Post, PostData, User, Review, CreateReviewRequest, ReviewStats } from '@/types/api'
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.oxylize.com'
+// Use localhost:8080 for development, and the API_URL env var for production
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || (process.env.NODE_ENV === 'development' ? 'http://localhost:8080' : 'https://api.oxylize.com')
 
 export const api = axios.create({
   baseURL: API_BASE_URL,
@@ -68,13 +69,21 @@ export const authAPI = {
   },
   logout: async () => {
     const response = await api.post('/auth/logout')
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('currentUser')
+    try {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('currentUser')
+    } catch (e) {
+      console.warn('Failed to clear auth data from localStorage:', e)
+    }
     return response.data
   },
   clearUserData: () => {
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('currentUser')
+    try {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('currentUser')
+    } catch (e) {
+      console.warn('Failed to clear auth data from localStorage:', e)
+    }
   },
   getCurrentUser: async () => {
     const response = await api.get('/auth/me')

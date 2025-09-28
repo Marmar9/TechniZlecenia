@@ -3,7 +3,27 @@
 # Setup script for remote server
 # Run this once to set up the server environment
 
+set -e  # Exit on any error
+
 echo "🔧 Setting up remote server..."
+
+# Check prerequisites
+if ! command -v ssh >/dev/null 2>&1; then
+    echo "❌ SSH client not found. Please install openssh-client."
+    exit 1
+fi
+
+if ! command -v scp >/dev/null 2>&1; then
+    echo "❌ SCP not found. Please install openssh-client."
+    exit 1
+fi
+
+# Test SSH connection
+echo "🔐 Testing SSH connection..."
+if ! ssh -o ConnectTimeout=10 -o StrictHostKeyChecking=no root@206.189.52.131 "echo 'SSH connection successful'" 2>/dev/null; then
+    echo "❌ Cannot connect to remote server. Please check SSH keys and connection."
+    exit 1
+fi
 
 # Update system packages
 echo "📦 Updating system packages..."
@@ -31,7 +51,8 @@ ssh root@206.189.52.131 "chown -R www-data:www-data /var/www/myapp && chmod -R 7
 
 # Copy nginx configuration
 echo "🔄 Setting up nginx configuration..."
-scp /home/eduard/Pulpit/TechniZlecenia/nginx-config.conf root@206.189.52.131:/etc/nginx/sites-available/techni-zlecenia
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+scp "$SCRIPT_DIR/nginx-config.conf" root@206.189.52.131:/etc/nginx/sites-available/techni-zlecenia
 
 # Enable the site
 echo "🔗 Enabling nginx site..."

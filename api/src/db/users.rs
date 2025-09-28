@@ -73,8 +73,11 @@ pub async fn is_username_taken(db: &PgPool, username: &String) -> bool {
     )
     .fetch_one(db)
     .await
-    .unwrap()
-    .unwrap()
+    .map(|result| result.unwrap_or(false))
+    .unwrap_or_else(|err| {
+        tracing::error!("Database error checking username availability: {}", err);
+        false
+    })
 }
 
 pub async fn is_email_taken(db: &PgPool, email: String) -> bool {
@@ -90,8 +93,11 @@ pub async fn is_email_taken(db: &PgPool, email: String) -> bool {
     )
     .fetch_one(db)
     .await
-    .unwrap()
-    .unwrap()
+    .map(|result| result.unwrap_or(false))
+    .unwrap_or_else(|err| {
+        tracing::error!("Database error checking email availability: {}", err);
+        false 
+    })
 }
 
 pub async fn add_user(

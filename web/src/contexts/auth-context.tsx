@@ -6,6 +6,7 @@ import type { User } from '@/types/api'
 
 interface AuthContextType {
   user: User | null
+  token: string | null
   isLoading: boolean
   login: (user: User, token: string) => void
   logout: () => void
@@ -16,42 +17,67 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<User | null>(null)
+  const [token, setToken] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const router = useRouter()
 
   useEffect(() => {
-    const token = localStorage.getItem('auth_token')
-    const userData = localStorage.getItem('currentUser')
-    
-    if (token && userData) {
-      try {
-        const parsedUser = JSON.parse(userData)
-        
-        if (parsedUser.id && parsedUser.id.length >= 10) {
-          setUser(parsedUser)
-        } else {
-          localStorage.removeItem('auth_token')
-          localStorage.removeItem('currentUser')
+    try {
+      const storedToken = localStorage.getItem('auth_token')
+      const userData = localStorage.getItem('currentUser')
+      
+      if (storedToken && userData) {
+        try {
+          const parsedUser = JSON.parse(userData)
+          
+          if (parsedUser.id && parsedUser.id.length >= 10) {
+            setUser(parsedUser)
+            setToken(storedToken)
+          } else {
+            try {
+              localStorage.removeItem('auth_token')
+              localStorage.removeItem('currentUser')
+            } catch (e) {
+              console.warn('Failed to clear invalid auth data from localStorage:', e)
+            }
+          }
+        } catch {
+          try {
+            localStorage.removeItem('auth_token')
+            localStorage.removeItem('currentUser')
+          } catch (e) {
+            console.warn('Failed to clear corrupted auth data from localStorage:', e)
+          }
         }
-      } catch {
-        localStorage.removeItem('auth_token')
-        localStorage.removeItem('currentUser')
       }
+    } catch (e) {
+      console.warn('localStorage is not available or accessible:', e)
     }
     
     setIsLoading(false)
   }, [])
 
-  const login = (userData: User, token: string) => {
+  const login = (userData: User, authToken: string) => {
     setUser(userData)
-    localStorage.setItem('auth_token', token)
-    localStorage.setItem('currentUser', JSON.stringify(userData))
+    setToken(authToken)
+    try {
+      localStorage.setItem('auth_token', authToken)
+      localStorage.setItem('currentUser', JSON.stringify(userData))
+    } catch (e) {
+      console.warn('Failed to store auth data in localStorage:', e)
+      // Continue with in-memory auth even if localStorage fails
+    }
   }
 
   const logout = () => {
     setUser(null)
-    localStorage.removeItem('auth_token')
-    localStorage.removeItem('currentUser')
+    setToken(null)
+    try {
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('currentUser')
+    } catch (e) {
+      console.warn('Failed to clear auth data from localStorage:', e)
+    }
     router.push('/auth/login')
   }
 
@@ -60,6 +86,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return (
     <AuthContext.Provider value={{
       user,
+      token,
       isLoading,
       login,
       logout,
