@@ -41,14 +41,14 @@ export function ReviewStatsComponent({ stats, className }: ReviewStatsProps) {
 
       <div className="space-y-2">
         {[5, 4, 3, 2, 1].map((stars) => {
-          const count = rating_breakdown[`${stars}_stars` as keyof typeof rating_breakdown] as number
+          const count = rating_breakdown[`${stars === 5 ? 'five' : stars === 4 ? 'four' : stars === 3 ? 'three' : stars === 2 ? 'two' : 'one'}_stars` as keyof typeof rating_breakdown] as number
           const percentage = getPercentage(count)
           
           return (
             <div key={stars} className="flex items-center space-x-2">
               <div className="flex items-center space-x-1 w-16">
                 <span className="text-sm font-medium">{stars}</span>
-                <StarRating rating={1} size="sm" />
+                <StarRating rating={stars} size="sm" />
               </div>
               <div className="flex-1 bg-muted rounded-full h-2">
                 <div
