@@ -189,7 +189,7 @@ generate_env_config() {
     case "$env_type" in
         "api")
             # API always connects to localhost (SSH tunnel handles remote DB)
-            echo "DATABASE_URL=postgresql://${POSTGRES_USER:-dev}:${POSTGRES_PASSWORD:-dev}@localhost:${DB_PORT:-5432}/techni-zlecenia"
+            echo "DATABASE_URL=postgresql://${POSTGRES_USER:-dev}:${POSTGRES_PASSWORD:-dev}@localhost:${DB_PORT:-5432}/techni_zlecenia"
             ;;
         "web")
             # Web needs to know where the API is

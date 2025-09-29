@@ -300,11 +300,21 @@ async fn process_command(
     let response = match command {
         ChatCommand::CreateThread { post_id, other_user_id } => {
             let thread = db_messages::create_thread(db, post_id, user_id, other_user_id).await?;
-            
-            // Get thread info for response
-            let threads = db_messages::get_user_threads(db, user_id).await?;
-            let thread_info = threads.into_iter().find(|t| t.id == thread.id)
+
+            // Get thread info for creator response
+            let creator_threads = db_messages::get_user_threads(db, user_id).await?;
+            let thread_info = creator_threads.into_iter().find(|t| t.id == thread.id)
                 .ok_or_else(|| AppError::InternalServerError("Thread not found after creation".to_string()))?;
+
+            // Also refresh the other participant's thread list
+            let other_user_threads = db_messages::get_user_threads(db, other_user_id).await?;
+            let other_response = ChatResponse::ThreadsList { threads: other_user_threads };
+            let connections = connection_manager.read().await;
+            if let Some(other_user_conns) = connections.get(&other_user_id) {
+                for conn in other_user_conns {
+                    let _ = conn.sender.send(other_response.clone());
+                }
+            }
 
             ChatResponse::ThreadCreated { thread: thread_info }
         }
@@ -327,6 +337,18 @@ async fn process_command(
                 content: message.content,
                 sent_at: message.sent_at,
             };
+
+            // Proactively fanout to the other participant as a NewMessage
+            if let Some(thread) = db_messages::get_thread_by_id(db, thread_id, user_id).await? {
+                let other_user_id = if thread.user_a == user_id { thread.user_b } else { thread.user_a };
+                let new_msg_response = ChatResponse::NewMessage { message: message_info.clone() };
+                let connections = connection_manager.read().await;
+                if let Some(other_user_conns) = connections.get(&other_user_id) {
+                    for conn in other_user_conns {
+                        let _ = conn.sender.send(new_msg_response.clone());
+                    }
+                }
+            }
 
             ChatResponse::MessageSent { message: message_info }
         }

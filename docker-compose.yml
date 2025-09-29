@@ -5,7 +5,7 @@ services:
     environment:
       POSTGRES_USER: ${POSTGRES_USER:-dev}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dev}
-      POSTGRES_DB: ${POSTGRES_DB:-techni-zlecenia}
+      POSTGRES_DB: ${POSTGRES_DB:-techni_zlecenia}
     volumes:
       - db_data:/var/lib/postgresql/data
 
