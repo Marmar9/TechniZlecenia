@@ -33,10 +33,12 @@ export function useChat({ apiUrl = process.env.NEXT_PUBLIC_API_URL || (process.e
     }
 
     try {
-      const wsProtocol = apiUrl.startsWith('https') ? 'wss:' : 'ws:'
-      const wsUrl = apiUrl.replace(/^https?:/, wsProtocol)
+      // Prefer same-origin websocket to avoid mixed-content and cert issues
+      const origin = typeof window !== 'undefined' ? window.location.origin : apiUrl
+      const wsProtocol = origin.startsWith('https') ? 'wss:' : 'ws:'
+      const wsBase = origin.replace(/^https?:/, wsProtocol)
       // Add token as query parameter for WebSocket authentication
-      const wsUrlWithAuth = `${wsUrl}/chat/ws?token=${encodeURIComponent(token)}`
+      const wsUrlWithAuth = `${wsBase}/chat/ws?token=${encodeURIComponent(token)}`
       const ws = new WebSocket(wsUrlWithAuth)
       
       ws.onopen = () => {
