@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useChat } from '@/hooks/use-chat'
+import { useState, useEffect } from 'react'
+import { useRouter } from 'next/navigation'
 import { Post } from '@/types/api'
 import { Button } from '@/components/ui/button'
 import { MessageCircle } from 'lucide-react'
@@ -14,7 +14,7 @@ interface ContactPostOwnerProps {
 }
 
 export function ContactPostOwner({ post, currentUserId, token }: ContactPostOwnerProps) {
-  const { createThread } = useChat({ token })
+  const router = useRouter()
   const { toast } = useToast()
   const [isCreating, setIsCreating] = useState(false)
 
@@ -43,19 +43,23 @@ export function ContactPostOwner({ post, currentUserId, token }: ContactPostOwne
     }
 
     setIsCreating(true)
-    
+
     try {
-      createThread(post.id, post.owner_id)
-      
+      // Defer thread creation to chat page where WebSocket is connected
+      const payload = { postId: post.id, otherUserId: post.owner_id }
+      try { localStorage.setItem('pendingChat', JSON.stringify(payload)) } catch (_e) {}
+
       toast({
-        title: "Chat Started",
-        description: `Started conversation with ${post.owner_name}`,
+        title: "Przechodzę do czatu",
+        description: `Rozpoczynam rozmowę z ${post.owner_name}`,
       })
+
+      router.push('/chat')
     } catch (error) {
-      console.error('Failed to create chat thread:', error)
+      console.error('Failed to navigate to chat:', error)
       toast({
         title: "Error",
-        description: "Failed to start conversation. Please try again.",
+        description: "Failed to open chat. Please try again.",
         variant: "destructive"
       })
     } finally {

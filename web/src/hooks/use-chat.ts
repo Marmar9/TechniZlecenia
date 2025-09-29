@@ -33,10 +33,12 @@ export function useChat({ apiUrl = process.env.NEXT_PUBLIC_API_URL || (process.e
     }
 
     try {
-      // Prefer same-origin websocket to avoid mixed-content and cert issues
-      const origin = typeof window !== 'undefined' ? window.location.origin : apiUrl
-      const wsProtocol = origin.startsWith('https') ? 'wss:' : 'ws:'
-      const wsBase = origin.replace(/^https?:/, wsProtocol)
+      // Use same-origin in production, fall back to API URL in local dev
+      const isBrowser = typeof window !== 'undefined'
+      const isLocal = isBrowser && (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+      const base = isLocal ? apiUrl : (isBrowser ? window.location.origin : apiUrl)
+      const wsProtocol = base.startsWith('https') ? 'wss:' : 'ws:'
+      const wsBase = base.replace(/^https?:/, wsProtocol)
       // Add token as query parameter for WebSocket authentication
       const wsUrlWithAuth = `${wsBase}/chat/ws?token=${encodeURIComponent(token)}`
       const ws = new WebSocket(wsUrlWithAuth)
@@ -100,8 +102,13 @@ export function useChat({ apiUrl = process.env.NEXT_PUBLIC_API_URL || (process.e
   const handleResponse = useCallback((response: ChatResponse) => {
     setState(prev => {
       switch (response.type) {
-        case 'threads_list':
-          return { ...prev, threads: response.threads }
+        case 'threads_list': {
+          const next: ChatState = { ...prev, threads: response.threads }
+          if (!prev.activeThreadId && response.threads.length > 0) {
+            next.activeThreadId = response.threads[0].id
+          }
+          return next
+        }
 
         case 'thread_created':
           return { 
@@ -156,6 +163,13 @@ export function useChat({ apiUrl = process.env.NEXT_PUBLIC_API_URL || (process.e
           return prev
       }
     })
+
+    // Side-effects after state update
+    if (response.type === 'threads_list' && response.threads.length > 0) {
+      const firstId = response.threads[0].id
+      // Preload messages for first thread if none selected yet
+      sendCommand({ cmd: 'get_messages', thread_id: firstId, limit: 50, offset: 0 })
+    }
   }, [])
 
   // Chat actions

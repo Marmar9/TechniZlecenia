@@ -1,12 +1,28 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { ChatInterface } from '@/components/features/chat-interface'
 import { useAuth } from '@/contexts/auth-context'
 import { AuthGuard } from '@/components/layout/auth-guard'
+import { useChat } from '@/hooks/use-chat'
 
 export default function ChatPage() {
   const { user, token } = useAuth()
+  const { createThread } = useChat({ token })
+
+  useEffect(() => {
+    // Handle deferred chat creation from Contact button
+    try {
+      const raw = localStorage.getItem('pendingChat')
+      if (raw && token) {
+        const { postId, otherUserId } = JSON.parse(raw)
+        if (postId && otherUserId) {
+          createThread(postId, otherUserId)
+        }
+        localStorage.removeItem('pendingChat')
+      }
+    } catch (_e) {}
+  }, [token, createThread])
 
   return (
     <AuthGuard>

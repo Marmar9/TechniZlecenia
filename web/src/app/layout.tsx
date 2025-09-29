@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next"
 import { Suspense } from "react"
 import { AuthProvider } from "@/contexts/auth-context"
 import { AuthGuard } from "@/components/layout/auth-guard"
+import { Header } from "@/components/layout/header"
 import { Toaster } from "@/components/ui/toaster"
 import "./globals.css"
 
@@ -24,6 +25,7 @@ export default function RootLayout({
       <body className={`font-sans ${GeistSans.variable} ${GeistMono.variable} antialiased`}>
         <AuthProvider>
           <AuthGuard>
+            <Header />
             <Suspense fallback={null}>{children}</Suspense>
             <Toaster />
           </AuthGuard>
