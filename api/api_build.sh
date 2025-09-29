@@ -10,7 +10,7 @@ psql -U postgres <<EOSQL
 CREATE DATABASE "techni-zlecenia" OWNER postgres;
 EOSQL
 
-export DATABASE_URL="postgres://postgres@localhost:5432/techni_zlecenia"
+export DATABASE_URL="postgres://postgres@localhost:5432/techni-zlecenia"
 sqlx migrate run
 
 # Step 4: Build Rust project
