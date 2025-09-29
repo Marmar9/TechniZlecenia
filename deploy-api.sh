@@ -34,7 +34,7 @@ fi
 echo "📦 Building Rust API..."
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR/api"
-cargo build --release
+cargo build
 
 if [ $? -ne 0 ]; then
     echo "❌ API build failed!"
@@ -75,7 +75,7 @@ ExecStart=/var/www/api/techni-zlecenia-api
 Restart=always
 RestartSec=5
 Environment=RUST_LOG=info
-Environment=DATABASE_URL=postgresql://dev:dev@localhost:5432/techni-zlecenia
+Environment=DATABASE_URL=postgresql://dev:dev@localhost:5432/techni_zlecenia
 
 [Install]
 WantedBy=multi-user.target

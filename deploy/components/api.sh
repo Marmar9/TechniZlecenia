@@ -57,7 +57,7 @@ build_api() {
     cd "$PROJECT_ROOT/api"
     
     if [[ "$MODE" == "prod" ]]; then
-        cargo build --release
+        cargo build 
         local binary_path="target/release/$API_BINARY"
     else
         cargo build
