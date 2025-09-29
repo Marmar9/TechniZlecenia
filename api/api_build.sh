@@ -10,11 +10,11 @@ psql -U postgres <<EOSQL
 CREATE DATABASE "techni-zlecenia" OWNER postgres;
 EOSQL
 
-export DATABASE_URL="postgres://postgres@localhost:5432/techni-zlecenia"
+export DATABASE_URL="postgres://postgres@localhost:5432/techni_zlecenia"
 sqlx migrate run
 
 # Step 4: Build Rust project
-RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --target x86_64-unknown-linux-musl
+RUSTFLAGS='-C target-feature=+crt-static' cargo build  --target x86_64-unknown-linux-musl
 
 # Step 5: Stop PostgreSQL
 su - postgres -c "pg_ctl -D /postgres -m fast stop"
